@@ -53,7 +53,7 @@ async def check_hostloc():
         await send_message(f"Hostloc 新帖子：{latest_post_title}")
 
 # 使用 schedule 库来定时执行检查
-def run_scheduler():
+async def run_scheduler():
     # 每隔1-2分钟钟执行一次检查
     await schedule.every(random.uniform(60, 120)).seconds.do(check_hostloc)
 
