@@ -1,1 +1,1 @@
-# hostloc2tg
+借助ChatGPT开发的hostloc新帖推送
