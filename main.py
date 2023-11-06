@@ -62,4 +62,5 @@ def run_scheduler():
         time.sleep(1)
 
 # 启动定时任务
-run_scheduler()
+if __name__ == "__main__":
+    run_scheduler()
