@@ -56,11 +56,13 @@ async def check_hostloc():
 # 使用 schedule 库来定时执行检查
 async def run_scheduler():
     # 每隔1-2分钟钟执行一次检查
-    await schedule.every(random.uniform(60, 120)).seconds.do(check_hostloc)
+    def check_hostloc_callback():
+        asyncio.create_task(check_hostloc())
+    schedule.every(random.uniform(60, 120)).seconds.do(check_hostloc_callback)
 
     while True:
         schedule.run_pending()
-        time.sleep(1)
+        await asyncio.sleep(1)
 
 # 启动定时任务
 if __name__ == "__main__":
