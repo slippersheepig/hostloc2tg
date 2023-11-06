@@ -3,11 +3,16 @@ import time
 from datetime import datetime, timedelta
 import schedule
 import telegram
+from pathlib import Path
+from dotenv import dotenv_values
+
+parent_dir = Path(__file__).resolve().parent
+config = dotenv_values(f"/opt/h2tg/.env")
 
 # Telegram Bot 的 API Token
-BOT_TOKEN = "YOUR_BOT_TOKEN"
+BOT_TOKEN = config["BOT_TOKEN"]
 # Telegram Channel 的 ID
-CHANNEL_ID = "YOUR_CHANNEL_ID"
+CHANNEL_ID = config["CHANNEL_ID"]
 # 上次检查的时间戳，初始设为当前时间
 last_check = int(time.time())
 
