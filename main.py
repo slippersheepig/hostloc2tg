@@ -20,7 +20,7 @@ last_check = int(time.time())
 # 发送消息到 Telegram Channel
 def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
-    bot.send_message(chat_id=CHANNEL_ID, text=msg)
+    await bot.send_message(chat_id=CHANNEL_ID, text=msg)
 
 # 检查 hostloc.com 的新帖子
 def check_hostloc():
@@ -50,7 +50,7 @@ def check_hostloc():
         latest_post_title = soup.select(".xst")[0].string
 
         # 发送最新的帖子标题到 Telegram Channel
-        send_message(f"Hostloc 新帖子：{latest_post_title}")
+        await send_message(f"Hostloc 新帖子：{latest_post_title}")
 
 # 使用 schedule 库来定时执行检查
 def run_scheduler():
