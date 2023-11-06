@@ -7,6 +7,7 @@ import asyncio
 import telegram
 from pathlib import Path
 from dotenv import dotenv_values
+from bs4 import BeautifulSoup
 
 parent_dir = Path(__file__).resolve().parent
 config = dotenv_values(f"/opt/h2tg/.env")
@@ -38,20 +39,18 @@ async def check_hostloc():
         # 更新上次检查的时间为当前时间
         last_check = current_time
 
-        # 对 hostloc.com 发起请求，获取最新的帖子标题
+        # 对hostloc.com发起请求，获取最新的帖子链接和标题
         response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread")
         html_content = response.text
 
-        # 解析网页内容，获取帖子标题
-        # 这里使用的是 BeautifulSoup 库进行网页解析，需要提前安装
-        # 可以使用 pip install beautifulsoup4 命令进行安装
-        from bs4 import BeautifulSoup
+        # 解析HTML内容，提取最新的帖子链接和标题
         soup = BeautifulSoup(html_content, 'html.parser')
-        # 获取最新的帖子标题
-        latest_post_title = soup.select(".xst")[0].string
+        post_links = soup.select(".xst")
+        latest_post_link = "https://www.hostloc.com/" + post_links[0]['href']
+        latest_post_title = post_links[0].string
 
-        # 发送最新的帖子标题到 Telegram Channel
-        await send_message(f"Hostloc 新帖子：{latest_post_title}")
+        # 发送最新的帖子链接和标题到Telegram Channel
+        await send_message(f"Hostloc 新帖子：\n{latest_post_title}\n{latest_post_link}")
 
 # 使用 schedule 库来定时执行检查
 async def run_scheduler():
