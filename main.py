@@ -23,7 +23,7 @@ async def send_message(msg):
     await bot.send_message(chat_id=CHANNEL_ID, text=msg)
 
 # 检查 hostloc.com 的新帖子
-def check_hostloc():
+async def check_hostloc():
     global last_check
     # 获取当前时间
     current_time = int(time.time())
@@ -55,7 +55,7 @@ def check_hostloc():
 # 使用 schedule 库来定时执行检查
 def run_scheduler():
     # 每隔1-2分钟钟执行一次检查
-    schedule.every(random.uniform(60, 120)).seconds.do(check_hostloc)
+    await schedule.every(random.uniform(60, 120)).seconds.do(check_hostloc)
 
     while True:
         schedule.run_pending()
