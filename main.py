@@ -63,4 +63,4 @@ async def run_scheduler():
 
 # 启动定时任务
 if __name__ == "__main__":
-    run_scheduler()
+    asyncio.run(run_scheduler())
