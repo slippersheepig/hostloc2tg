@@ -18,12 +18,12 @@ CHANNEL_ID = config["CHANNEL_ID"]
 last_check = int(time.time())
 
 # 发送消息到 Telegram Channel
-def send_message(msg):
+async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
     await bot.send_message(chat_id=CHANNEL_ID, text=msg)
 
 # 检查 hostloc.com 的新帖子
-def check_hostloc():
+async def check_hostloc():
     global last_check
     # 获取当前时间
     current_time = int(time.time())
