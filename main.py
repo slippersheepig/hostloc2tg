@@ -14,8 +14,8 @@ BOT_TOKEN = config["BOT_TOKEN"]
 # Telegram Channel 的 ID
 CHANNEL_ID = config["CHANNEL_ID"]
 
-# 上次检查的时间戳，初始设为当前时间
-last_check = int(time.time())
+# 上次检查的时间戳，初始设为当前时间 - 3分钟
+last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
 pushed_posts = set()
 
@@ -37,43 +37,39 @@ def get_post_permission(link):
     permission = permission_element.get_text() if permission_element else "0"
     return permission
 
-# 检查 hostloc.com 的新帖子
+# 检查 hostloc.com 的新贴子
 async def check_hostloc():
     global last_check
-    # 获取当前时间
-    current_time = int(time.time())
-    # 计算上次检查到当前时间之间的时间差
-    time_diff = current_time - last_check
-    # 设置一个时间阈值，例如每隔5分钟检查一次
-    time_threshold = 300
+    # 对hostloc.com发起请求，获取最新的帖子链接和标题
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
+    html_content = response.text
 
-    # 如果距离上次检查的时间超过时间阈值，则进行检查
-    if time_diff > time_threshold:
-        # 对hostloc.com发起请求，获取最新的帖子链接和标题
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
-        html_content = response.text
+    # 解析HTML内容，提取最新的帖子链接和标题
+    soup = BeautifulSoup(html_content, 'html.parser')
+    post_links = soup.select(".xst")
 
-        # 解析HTML内容，提取最新的帖子链接和标题
-        soup = BeautifulSoup(html_content, 'html.parser')
-        post_links = soup.select(".xst")
+    # 遍历最新的帖子链接
+    for link in reversed(post_links):  # 遍历最新的帖子链接，从后往前
+        post_link = "https://www.hostloc.com/" + link['href']
+        post_title = link.string
 
-        # 遍历最新的帖子链接
-        for link in reversed(post_links):  # 遍历最新的帖子链接，从后往前
-            post_link = "https://www.hostloc.com/" + link['href']
-            post_title = link.string
+        # 获取帖子发布时间
+        post_time_str = link.parent.find_next('em').text
+        post_time = time.mktime(time.strptime(post_time_str, "%Y-%m-%d %H:%M"))
 
-            # 如果帖子链接不在已推送过的新贴集合中，则发送到Telegram Channel并将链接加入已推送集合
-            if post_link not in pushed_posts:
-                pushed_posts.add(post_link)
-                permission = get_post_permission(post_link)
-                display_permission = f"阅读权限：{permission}" if permission != "0" else ""
-                await send_message(f"{post_title}\n{display_permission}\n{post_link}")
+        # 如果帖子链接不在已推送过的新贴集合中，并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
+        if post_link not in pushed_posts and post_time > last_check:
+            pushed_posts.add(post_link)
+            permission = get_post_permission(post_link)
+            display_permission = f"阅读权限：{permission}" if permission != "0" else ""
+            await send_message(f"{post_title}\n{display_permission}\n{post_link}")
 
-        # 更新上次检查的时间为当前时间
-        last_check = current_time
+    # 更新上次检查的时间为最后一个帖子的发布时间
+    if post_links:
+        last_check = post_time
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
 async def run_scheduler():
