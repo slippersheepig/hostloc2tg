@@ -3,12 +3,11 @@ import time
 import random
 import asyncio
 import telegram
-from pathlib import Path
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 
 # 从.env文件中读取配置
-config = dotenv_values(f"/opt/h2tg/.env")
+config = dotenv_values("/opt/h2tg/.env")
 
 # Telegram Bot 的 API Token
 BOT_TOKEN = config["BOT_TOKEN"]
@@ -27,7 +26,10 @@ async def send_message(msg):
 
 # 获取帖子的阅读权限
 def get_post_permission(link):
-    response = requests.get(link)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    }
+    response = requests.get(link, headers=headers)
     html_content = response.text
 
     soup = BeautifulSoup(html_content, 'html.parser')
@@ -48,7 +50,10 @@ async def check_hostloc():
     # 如果距离上次检查的时间超过时间阈值，则进行检查
     if time_diff > time_threshold:
         # 对hostloc.com发起请求，获取最新的帖子链接和标题
-        response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread")
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
         html_content = response.text
 
         # 解析HTML内容，提取最新的帖子链接和标题
