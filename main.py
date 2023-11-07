@@ -46,6 +46,9 @@ def parse_relative_time(relative_time_str):
     elif "分钟前" in relative_time_str:
         minutes_ago = int(relative_time_str.split()[0])
         return int(time.time()) - minutes_ago * 60
+    elif "半小时前" in relative_time_str:
+        # 处理 "半小时前"，将时间戳减半小时
+        return int(time.time()) - 30 * 60
     else:
         return None
 
