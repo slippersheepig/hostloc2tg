@@ -19,7 +19,6 @@ CHANNEL_ID = config["CHANNEL_ID"]
 last_check = int(time.time())
 # 保存已推送过的新贴链接
 pushed_posts = set()
-last_post = ""
 
 # 发送消息到 Telegram Channel
 async def send_message(msg):
@@ -38,7 +37,7 @@ def get_post_permission(link):
 
 # 检查 hostloc.com 的新帖子
 async def check_hostloc():
-    global last_check, last_post  # 声明要使用的全局变量
+    global last_check
     # 获取当前时间
     current_time = int(time.time())
     # 计算上次检查到当前时间之间的时间差
@@ -56,29 +55,20 @@ async def check_hostloc():
         soup = BeautifulSoup(html_content, 'html.parser')
         post_links = soup.select(".xst")
 
-        # 找到上一次获取到的新帖子的位置
-        last_post_index = None
-        for i, link in enumerate(post_links):
+        # 遍历最新的帖子链接
+        for link in reversed(post_links):  # 遍历最新的帖子链接，从后往前
             post_link = "https://www.hostloc.com/" + link['href']
-            if post_link == last_post:
-                last_post_index = i
-                break
+            post_title = link.string
 
-        # 如果找到上一次获取到的新帖子的位置，从该位置开始遍历新的帖子链接
-        if last_post_index is not None:
-            for link in post_links[:last_post_index + 1]:
-                post_link = "https://www.hostloc.com/" + link['href']
-                post_title = link.string
+            # 如果帖子链接不在已推送过的新贴集合中，则发送到Telegram Channel并将链接加入已推送集合
+            if post_link not in pushed_posts:
+                pushed_posts.add(post_link)
+                permission = get_post_permission(post_link)
+                display_permission = f"阅读权限：{permission}" if permission != "0" else ""
+                await send_message(f"{post_title}\n{display_permission}\n{post_link}")
 
-                # 如果帖子链接不在已推送过的新贴集合中，则发送到Telegram Channel并将链接加入已推送集合
-                if post_link not in pushed_posts:
-                    pushed_posts.add(post_link)
-                    permission = get_post_permission(post_link)
-                    display_permission = f"阅读权限：{permission}" if permission != "0" else ""
-                    await send_message(f"{post_title}\n{display_permission}\n{post_link}")
-
-            # 更新上次检查的时间为当前时间
-            last_check = current_time
+        # 更新上次检查的时间为当前时间
+        last_check = current_time
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
 async def run_scheduler():
