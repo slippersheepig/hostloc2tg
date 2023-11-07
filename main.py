@@ -61,7 +61,7 @@ async def check_hostloc():
         last_post_index = None
         for i, link in enumerate(post_links):
             post_link = "https://www.hostloc.com/" + link['href']
-            if post_link == last_post:
+            if post_link == last_check:
                 last_post_index = i
                 break
 
