@@ -26,6 +26,15 @@ async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
     await bot.send_message(chat_id=CHANNEL_ID, text=msg)
 
+# 获取帖子的阅读权限
+def get_post_permission(link):
+    response = requests.get(link)
+    html_content = response.text
+
+    soup = BeautifulSoup(html_content, 'html.parser')
+    permission = soup.select('.authi > .xw1')[0].get_text()
+    return permission
+
 # 检查 hostloc.com 的新帖子
 async def check_hostloc():
     global last_check
@@ -54,7 +63,8 @@ async def check_hostloc():
         # 如果最新的帖子链接不在已推送过的新贴集合中，则发送到Telegram Channel
         if latest_post_link not in pushed_posts:
             pushed_posts.add(latest_post_link)
-            await send_message(f"{latest_post_title}\n{latest_post_link}")
+            permission = get_post_permission(latest_post_link)
+            await send_message(f"{latest_post_title}\n阅读权限：{permission}\n{latest_post_link}")
 
 # 使用 schedule 库来定时执行检查
 async def run_scheduler():
