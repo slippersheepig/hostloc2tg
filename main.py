@@ -5,6 +5,7 @@ import asyncio
 import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -37,6 +38,17 @@ def get_post_permission(link):
     permission = permission_element.get_text() if permission_element else "0"
     return permission
 
+# 解析相对时间字符串，例如 "1小时前"，返回对应的时间戳
+def parse_relative_time(relative_time_str):
+    if "小时前" in relative_time_str:
+        hours_ago = int(relative_time_str.split()[0])
+        return int(time.time()) - hours_ago * 3600
+    elif "分钟前" in relative_time_str:
+        minutes_ago = int(relative_time_str.split()[0])
+        return int(time.time()) - minutes_ago * 60
+    else:
+        return None
+
 # 检查 hostloc.com 的新贴子
 async def check_hostloc():
     global last_check
@@ -58,17 +70,17 @@ async def check_hostloc():
 
         # 获取帖子发布时间
         post_time_str = link.parent.find_next('em').text
-        post_time = time.mktime(time.strptime(post_time_str, "%Y-%m-%d %H:%M"))
+        post_time = parse_relative_time(post_time_str)
 
         # 如果帖子链接不在已推送过的新贴集合中，并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
-        if post_link not in pushed_posts and post_time > last_check:
+        if post_link not in pushed_posts and post_time is not None and post_time > last_check:
             pushed_posts.add(post_link)
             permission = get_post_permission(post_link)
             display_permission = f"阅读权限：{permission}" if permission != "0" else ""
             await send_message(f"{post_title}\n{display_permission}\n{post_link}")
 
     # 更新上次检查的时间为最后一个帖子的发布时间
-    if post_links:
+    if post_links and post_time is not None:
         last_check = post_time
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
