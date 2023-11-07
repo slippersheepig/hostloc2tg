@@ -7,10 +7,8 @@ from pathlib import Path
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 
-# 获取当前文件的父目录路径
-parent_dir = Path(__file__).resolve().parent
 # 从.env文件中读取配置
-config = dotenv_values(parent_dir / ".env")
+config = dotenv_values(f"/opt/h2tg/.env")
 
 # Telegram Bot 的 API Token
 BOT_TOKEN = config["BOT_TOKEN"]
