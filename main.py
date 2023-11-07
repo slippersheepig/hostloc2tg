@@ -42,7 +42,7 @@ async def check_hostloc():
     # 计算上次检查到当前时间之间的时间差
     time_diff = current_time - last_check
     # 设置一个时间阈值，例如每隔5分钟检查一次
-    time_threshold = 30
+    time_threshold = 300
 
     # 如果距离上次检查的时间超过时间阈值，则进行检查
     if time_diff > time_threshold:
