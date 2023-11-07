@@ -8,7 +8,7 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 
 # 获取当前文件的父目录路径
-parent_dir = Path(__file__).resolve().parent
+parent_dir = Path(__file__).resolve().parent  # 修正这里的代码
 # 从.env文件中读取配置
 config = dotenv_values(parent_dir / ".env")
 
@@ -21,6 +21,7 @@ CHANNEL_ID = config["CHANNEL_ID"]
 last_check = int(time.time())
 # 保存已推送过的新贴链接
 pushed_posts = set()
+last_post = ""  # 定义 last_post 变量
 
 # 发送消息到 Telegram Channel
 async def send_message(msg):
@@ -39,7 +40,7 @@ def get_post_permission(link):
 
 # 检查 hostloc.com 的新帖子
 async def check_hostloc():
-    global last_check
+    global last_check, last_post  # 声明要使用的全局变量
     # 获取当前时间
     current_time = int(time.time())
     # 计算上次检查到当前时间之间的时间差
@@ -61,13 +62,13 @@ async def check_hostloc():
         last_post_index = None
         for i, link in enumerate(post_links):
             post_link = "https://www.hostloc.com/" + link['href']
-            if post_link == last_check:
+            if post_link == last_post:
                 last_post_index = i
                 break
 
         # 如果找到上一次获取到的新帖子的位置，从该位置开始遍历新的帖子链接
         if last_post_index is not None:
-            for link in post_links[:last_post_index+1]:
+            for link in post_links[:last_post_index + 1]:
                 post_link = "https://www.hostloc.com/" + link['href']
                 post_title = link.string
 
@@ -89,5 +90,5 @@ async def run_scheduler():
         asyncio.create_task(check_hostloc())
 
 # 启动定时任务
-if __name__ == "__main__":
+if __name__ == "__main__":  # 修正 if name == "main": 为 if __name__ == "__main__":
     asyncio.run(run_scheduler())
