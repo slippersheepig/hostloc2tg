@@ -8,7 +8,7 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 
 # 获取当前文件的父目录路径
-parent_dir = Path(__file__).resolve().parent  # 修正这里的代码
+parent_dir = Path(__file__).resolve().parent
 # 从.env文件中读取配置
 config = dotenv_values(parent_dir / ".env")
 
@@ -21,7 +21,7 @@ CHANNEL_ID = config["CHANNEL_ID"]
 last_check = int(time.time())
 # 保存已推送过的新贴链接
 pushed_posts = set()
-last_post = ""  # 定义 last_post 变量
+last_post = ""
 
 # 发送消息到 Telegram Channel
 async def send_message(msg):
@@ -90,5 +90,5 @@ async def run_scheduler():
         asyncio.create_task(check_hostloc())
 
 # 启动定时任务
-if __name__ == "__main__":  # 修正 if name == "main": 为 if __name__ == "__main__":
+if __name__ == "__main__":
     asyncio.run(run_scheduler())
