@@ -1,8 +1,6 @@
 import requests
 import time
 import random
-from datetime import datetime, timedelta
-import schedule
 import asyncio
 import telegram
 from pathlib import Path
@@ -10,7 +8,7 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 
 parent_dir = Path(__file__).resolve().parent
-config = dotenv_values(f"/opt/h2tg/.env")
+config = dotenv_values(parent_dir / ".env")
 
 # Telegram Bot 的 API Token
 BOT_TOKEN = config["BOT_TOKEN"]
@@ -32,7 +30,8 @@ def get_post_permission(link):
     html_content = response.text
 
     soup = BeautifulSoup(html_content, 'html.parser')
-    permission = soup.select('.authi > .xw1')[0].get_text()
+    permission_element = soup.select_one('.authi > .xw1')
+    permission = permission_element.get_text() if permission_element else "0"
     return permission
 
 # 检查 hostloc.com 的新帖子
@@ -43,7 +42,7 @@ async def check_hostloc():
     # 计算上次检查到当前时间之间的时间差
     time_diff = current_time - last_check
     # 设置一个时间阈值，例如每隔5分钟检查一次
-    time_threshold = timedelta(minutes=5).seconds
+    time_threshold = 5 * 60
 
     # 如果距离上次检查的时间超过时间阈值，则进行检查
     if time_diff > time_threshold:
@@ -67,18 +66,15 @@ async def check_hostloc():
             if post_link not in pushed_posts:
                 pushed_posts.add(post_link)
                 permission = get_post_permission(post_link)
-                await send_message(f"{post_title}\n阅读权限：{permission}\n{post_link}")
+                display_permission = f"阅读权限：{permission}" if permission != "0" else ""
+                await send_message(f"{post_title}\n{display_permission}\n{post_link}")
 
-# 使用 schedule 库来定时执行检查
+# 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
 async def run_scheduler():
     # 每隔1-2分钟钟执行一次检查
-    def check_hostloc_callback():
-        asyncio.create_task(check_hostloc())
-    schedule.every(random.uniform(60, 120)).seconds.do(check_hostloc_callback)
-
     while True:
-        schedule.run_pending()
-        await asyncio.sleep(1)
+        await asyncio.sleep(random.uniform(60, 120))
+        asyncio.create_task(check_hostloc())
 
 # 启动定时任务
 if __name__ == "__main__":
