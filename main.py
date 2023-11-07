@@ -18,6 +18,8 @@ BOT_TOKEN = config["BOT_TOKEN"]
 CHANNEL_ID = config["CHANNEL_ID"]
 # 上次检查的时间戳，初始设为当前时间
 last_check = int(time.time())
+# 保存已推送过的新贴链接
+pushed_posts = set()
 
 # 发送消息到 Telegram Channel
 async def send_message(msg):
@@ -49,8 +51,10 @@ async def check_hostloc():
         latest_post_link = "https://www.hostloc.com/" + post_links[0]['href']
         latest_post_title = post_links[0].string
 
-        # 发送最新的帖子链接和标题到Telegram Channel
-        await send_message(f"Hostloc 新帖子：\n{latest_post_title}\n{latest_post_link}")
+        # 如果最新的帖子链接不在已推送过的新贴集合中，则发送到Telegram Channel
+        if latest_post_link not in pushed_posts:
+            pushed_posts.add(latest_post_link)
+            await send_message(f"{latest_post_title}\n{latest_post_link}")
 
 # 使用 schedule 库来定时执行检查
 async def run_scheduler():
