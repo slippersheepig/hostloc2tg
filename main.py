@@ -57,14 +57,17 @@ async def check_hostloc():
         # 解析HTML内容，提取最新的帖子链接和标题
         soup = BeautifulSoup(html_content, 'html.parser')
         post_links = soup.select(".xst")
-        latest_post_link = "https://www.hostloc.com/" + post_links[0]['href']
-        latest_post_title = post_links[0].string
 
-        # 如果最新的帖子链接不在已推送过的新贴集合中，则发送到Telegram Channel
-        if latest_post_link not in pushed_posts:
-            pushed_posts.add(latest_post_link)
-            permission = get_post_permission(latest_post_link)
-            await send_message(f"{latest_post_title}\n阅读权限：{permission}\n{latest_post_link}")
+        # 逐个检查最新的帖子链接
+        for link in post_links:
+            post_link = "https://www.hostloc.com/" + link['href']
+            post_title = link.string
+
+            # 如果帖子链接不在已推送过的新贴集合中，则发送到Telegram Channel并将链接加入已推送集合
+            if post_link not in pushed_posts:
+                pushed_posts.add(post_link)
+                permission = get_post_permission(post_link)
+                await send_message(f"{post_title}\n阅读权限：{permission}\n{post_link}")
 
 # 使用 schedule 库来定时执行检查
 async def run_scheduler():
