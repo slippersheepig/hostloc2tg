@@ -38,24 +38,22 @@ def get_post_permission(link):
     permission = permission_element.get_text() if permission_element else "0"
     return permission
 
-# 解析相对时间字符串，例如 "1小时前"，返回对应的时间戳
 def parse_relative_time(relative_time_str):
-    if "小时前" in relative_time_str:
-        hours_ago = int(relative_time_str.split()[0])
-        result = int(time.time()) - hours_ago * 3600
-        print(f"Parsed hours: {hours_ago}, Result: {result}")
-        return result
-    elif "分钟前" in relative_time_str:
-        minutes_ago = int(relative_time_str.split()[0])
-        result = int(time.time()) - minutes_ago * 60
-        print(f"Parsed minutes: {minutes_ago}, Result: {result}")
-        return result
-    elif "半小时前" in relative_time_str:
-        # 处理 "半小时前"，将时间戳减半小时
-        result = int(time.time()) - 30 * 60
-        print(f"Parsed half an hour, Result: {result}")
-        return result
-    else:
+    try:
+        if "小时前" in relative_time_str:
+            hours_ago = int(relative_time_str.split()[0])
+            return int(time.time()) - hours_ago * 3600
+        elif "分钟前" in relative_time_str:
+            minutes_ago = int(relative_time_str.split()[0])
+            return int(time.time()) - minutes_ago * 60
+        elif "半小时前" in relative_time_str:
+            # 处理 "半小时前"，将时间戳减半小时
+            return int(time.time()) - 30 * 60
+        else:
+            return None
+    except ValueError as e:
+        print(f"Error occurred: {e}")
+        print(f"String causing the error: {relative_time_str}")
         return None
 
 # 检查 hostloc.com 的新贴子
