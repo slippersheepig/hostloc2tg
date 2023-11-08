@@ -34,7 +34,7 @@ def get_post_permission(link):
     html_content = response.text
 
     soup = BeautifulSoup(html_content, 'html.parser')
-    permission_element = soup.select_one('span.xw1')
+    permission_element = soup.select_one('th.common span.xw1')
     permission = permission_element.get_text() if permission_element else "0"
     return permission
 
