@@ -25,19 +25,6 @@ async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
     await bot.send_message(chat_id=CHANNEL_ID, text=msg)
 
-# 获取帖子的阅读权限
-def get_post_permission(link):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    response = requests.get(link, headers=headers)
-    html_content = response.text
-
-    soup = BeautifulSoup(html_content, 'html.parser')
-    permission_element = soup.select_one('tr > .common > .xw1')
-    permission = permission_element.get_text() if permission_element else "0"
-    return permission
-
 def parse_relative_time(relative_time_str):
     try:
         if "小时前" in relative_time_str:
@@ -82,9 +69,7 @@ async def check_hostloc():
         # 如果帖子链接不在已推送过的新贴集合中，并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
         if post_link not in pushed_posts and post_time is not None and post_time > last_check:
             pushed_posts.add(post_link)
-            permission = get_post_permission(post_link)
-            display_permission = f"阅读权限：{permission}" if permission != "0" else ""
-            await send_message(f"{post_title}\n{display_permission}\n{post_link}")
+            await send_message(f"{post_title}\n{post_link}")
 
     # 更新上次检查的时间为最后一个帖子的发布时间
     if post_links and post_time is not None:
@@ -98,5 +83,5 @@ async def run_scheduler():
         asyncio.create_task(check_hostloc())
 
 # 启动定时任务
-if __name__ == "__main__":
+if __name__ == "main":
     asyncio.run(run_scheduler())
