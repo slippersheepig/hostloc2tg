@@ -83,5 +83,5 @@ async def run_scheduler():
         asyncio.create_task(check_hostloc())
 
 # 启动定时任务
-if __name__ == "main":
+if __name__ == "__main__":
     asyncio.run(run_scheduler())
