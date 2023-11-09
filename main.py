@@ -46,23 +46,25 @@ async def check_hostloc():
         # 如果帖子链接不在已推送过的新贴集合中
         if post_link not in pushed_posts:
             # 获取帖子发布时间
-            post_time_str = link.parent.find_next('em').text
             post_time = int(time.time())
 
-            # 如果是首次启动，只获取最新的3个新帖
-            if len(pushed_posts) == 0 and len(pushed_posts) <= 3:
-                pushed_posts.add(post_link)
-                await send_message(f"{post_title}\n{post_link}")
             # 如果发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
-            elif post_time > last_check:
+            if post_time > last_check:
                 pushed_posts.add(post_link)
                 await send_message(f"{post_title}\n{post_link}")
+                
+            # 如果帖子链接出现在上一次的新帖链接中，停止遍历
+            elif post_link in pushed_posts:
+                break
 
     # 更新上次检查的时间为当前时间
     last_check = int(time.time())
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
 async def run_scheduler():
+    # 首次运行只获取最新的3条新帖
+    await check_hostloc()
+
     # 每隔1-2分钟执行一次检查
     while True:
         await asyncio.sleep(random.uniform(60, 120))
