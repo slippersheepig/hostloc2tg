@@ -43,14 +43,20 @@ async def check_hostloc():
         post_link = "https://www.hostloc.com/" + link['href']
         post_title = link.string
 
-        # 获取帖子发布时间
-        post_time_str = link.parent.find_next('em').text
-        post_time = int(time.time())
+        # 如果帖子链接不在已推送过的新贴集合中
+        if post_link not in pushed_posts:
+            # 获取帖子发布时间
+            post_time_str = link.parent.find_next('em').text
+            post_time = int(time.time())
 
-        # 如果帖子链接不在已推送过的新贴集合中，并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
-        if post_link not in pushed_posts and post_time > last_check:
-            pushed_posts.add(post_link)
-            await send_message(f"{post_title}\n{post_link}")
+            # 如果是首次启动，只获取最新的3个新帖
+            if len(pushed_posts) == 0 and len(pushed_posts) <= 3:
+                pushed_posts.add(post_link)
+                await send_message(f"{post_title}\n{post_link}")
+            # 如果发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
+            elif post_time > last_check:
+                pushed_posts.add(post_link)
+                await send_message(f"{post_title}\n{post_link}")
 
     # 更新上次检查的时间为当前时间
     last_check = int(time.time())
