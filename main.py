@@ -15,7 +15,8 @@ BOT_TOKEN = config["BOT_TOKEN"]
 # Telegram Channel 的 ID
 CHANNEL_ID = config["CHANNEL_ID"]
 # 关键字过滤
-KEYWORDS = config.get("KEYWORDS")  # 使用 get() 方法获取关键字，如果没有指定关键字，则返回 None
+KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST").split(',') if config.get("KEYWORDS_WHITELIST") else []
+KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDS_BLACKLIST") else []
 
 # 上次检查的时间戳，初始设为当前时间 - 3分钟
 last_check = int(time.time()) - 180
@@ -57,10 +58,14 @@ async def check_hostloc():
         post_time_str = link.parent.find_next('em').text
         post_time = parse_relative_time(post_time_str)
 
-        # 如果没有指定关键字或帖子链接不在已推送过的新贴集合中，并且发布时间在上次检查时间之后，并且标题包含关键字，发送到Telegram Channel并将链接加入已推送集合
-        if (not KEYWORDS or any(keyword in post_title for keyword in (KEYWORDS.split(',') if KEYWORDS else []))) and post_link not in pushed_posts and post_time is not None and post_time > last_check:
-            pushed_posts.add(post_link)
-            await send_message(f"{post_title}\n{post_link}")
+        # 如果没有指定关键字或帖子链接不在已推送过的新贴集合中，
+        # 并且发布时间在上次检查时间之后，并且标题包含白名单关键字，
+        # 并且标题不包含黑名单关键字，
+        # 发送到Telegram Channel并将链接加入已推送集合
+        if post_link not in pushed_posts and post_time is not None and post_time > last_check:
+            if any(keyword in post_title for keyword in KEYWORDS_WHITELIST) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
+                pushed_posts.add(post_link)
+                await send_message(f"{post_title}\n{post_link}")
 
     # 更新上次检查的时间为最后一个帖子的发布时间
     if post_links and post_time is not None:
