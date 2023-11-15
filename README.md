@@ -4,10 +4,11 @@
 ```bash
 BOT_TOKEN=123456789:ABCDEFGHIJKLMNOPQRSTUVWXYZ
 CHANNEL_ID=-10000000000
-KEYWORDS=甲骨文,mjj
+KEYWORDS_WHITELIST=甲骨文,mjj
+KEYWORDS_BLACKLIST=出,收
 ```
 `BOT_TOKEN`是你的电报机器人API TOKEN，`CHANNEL_ID`是你的电报频道ID（机器人需在频道内并具有发送消息权限）  
-🐼`KEYWORDS`为可选配置，可以删除，默认推送全部新帖，若设置了关键字，则只推送包含关键字的新帖，设置多个关键字时，匹配到任一关键字都会推送，关键字以英文逗号分隔
+🐼`KEYWORDS`（白名单和黑名单）为可选配置，可以删除，默认推送全部新帖，若设置了关键字（可同时设置），则只推送/不推送包含关键字的新帖，设置多个关键字时，匹配到任一关键字都会推送/不推送，关键字以英文逗号分隔
 #### 二、新建`docker-compose.yml`，编辑以下内容并保存
 ```bash
 services:
