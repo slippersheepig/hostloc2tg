@@ -63,7 +63,7 @@ async def check_hostloc():
         # 并且标题不包含黑名单关键字，
         # 发送到Telegram Channel并将链接加入已推送集合
         if post_link not in pushed_posts and post_time is not None and post_time > last_check:
-            if any(keyword in post_title for keyword in KEYWORDS_WHITELIST) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
+            if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                 pushed_posts.add(post_link)
                 await send_message(f"{post_title}\n{post_link}")
 
