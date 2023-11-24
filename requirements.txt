@@ -3,4 +3,4 @@ schedule
 beautifulsoup4
 python-dotenv
 python-telegram-bot
-pycrypto
+pycryptoplus
