@@ -26,7 +26,7 @@ def check_anti_cc() -> dict:
     }
     home_page = "https://hostloc.com/forum.php"
     res = requests.get(home_page, headers=headers)
-    aes_keys = re.findall('toNumbers\("(.*?)"\)', res.text)
+    aes_keys = re.findall(r'toNumbers\("(.*?)"\)', res.text)
     cookie_name = re.findall('cookie="(.*?)="', res.text)
 
     if len(aes_keys) != 0:  # 开启了防CC机制
@@ -78,7 +78,7 @@ BOT_TOKEN = config["BOT_TOKEN"]
 CHANNEL_ID = config["CHANNEL_ID"]
 # 关键字过滤
 KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST").split(',') if config.get("KEYWORDS_WHITELIST") else []
-KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDS_BLACKLIST") else []
+KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDSBLACKLIST") else []
 # 发帖人屏蔽名单
 BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKED_POSTERS") else []
 
