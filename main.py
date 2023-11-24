@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import textwrap
 import re
-from CryptoPlus.Cipher import AES
+from pyaes import AESModeOfOperationCBC
 
 # 使用Python实现防CC验证页面中JS写的的toNumbers函数
 def toNumbers(secret: str) -> list:
@@ -16,7 +16,6 @@ def toNumbers(secret: str) -> list:
     for value in textwrap.wrap(secret, 2):
         text.append(int(value, 16))
     return text
-
 
 # 不带Cookies访问论坛首页，检查是否开启了防CC机制，将开启状态、AES计算所需的参数全部放在一个字典中返回
 def check_anti_cc() -> dict:
@@ -41,9 +40,7 @@ def check_anti_cc() -> dict:
             result_dict["c"] = aes_keys[2]
     else:
         pass
-
     return result_dict
-
 
 # 在开启了防CC机制时使用获取到的数据进行AES解密计算生成一条Cookie（未开启防CC机制时返回空Cookies）
 def gen_anti_cc_cookies() -> dict:
@@ -60,14 +57,11 @@ def gen_anti_cc_cookies() -> dict:
             c = bytes(toNumbers(anti_cc_status["c"]))
             cbc_mode = AESModeOfOperationCBC(a, b)
             result = cbc_mode.decrypt(c)
-
             name = anti_cc_status["cookie_name"]
             cookies[name] = result.hex()
     else:
         pass
-
     return cookies
-
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -78,7 +72,7 @@ BOT_TOKEN = config["BOT_TOKEN"]
 CHANNEL_ID = config["CHANNEL_ID"]
 # 关键字过滤
 KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST").split(',') if config.get("KEYWORDS_WHITELIST") else []
-KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDSBLACKLIST") else []
+KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDS_BLACKLIST") else []
 # 发帖人屏蔽名单
 BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKED_POSTERS") else []
 
