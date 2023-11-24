@@ -50,7 +50,7 @@ async def check_hostloc():
     }
     session = requests.Session()
     response = session.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
-    cookie = response.headers['set-cookie']
+    cookies = session.cookies.get_dict()
     soup = BeautifulSoup(response.text, 'html.parser')
 
     # 获取JS验证的参数和URL
@@ -58,10 +58,8 @@ async def check_hostloc():
     js_url = 'https://www.hostloc.com/' + soup.select_one('[id="jscpqform"]')['action']
 
     # 发送POST请求进行JS验证
-    session.headers = headers
     session.headers['Content-Type'] = 'application/x-www-form-urlencoded'
-    session.headers['Cookie'] = cookie
-    response = session.post(js_url, headers=headers, data={'jscpqform:parameters': js_param})
+    response = session.post(js_url, headers=headers, cookies=cookies, data={'jscpqform:parameters': js_param})
     html_content = response.text
 
     # 解析HTML内容，提取最新的帖子链接和标题
