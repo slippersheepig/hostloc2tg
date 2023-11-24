@@ -44,7 +44,7 @@ async def check_hostloc():
     headers = {
         'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36'
     }
-    response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
+    response = requests.get("https://www.hostloc.com/forum.php?mobile=2&mod=guide&view=newthread", headers=headers)
     html_content = response.text
 
     # 解析HTML内容，提取最新的帖子链接和标题
