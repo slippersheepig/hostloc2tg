@@ -42,9 +42,9 @@ async def check_hostloc():
     global last_check
     # 对hostloc.com发起请求，获取最新的帖子链接和标题
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Mobile Safari/537.36'
     }
-    response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
+    response = requests.get("https://www.hostloc.com/forum.php?mobile=yes&mod=guide&view=newthread", headers=headers)
     html_content = response.text
 
     # 解析HTML内容，提取最新的帖子链接和标题
