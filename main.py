@@ -20,8 +20,8 @@ KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("
 # 发帖人屏蔽名单
 BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKED_POSTERS") else []
 
-# 上次检查的时间戳，初始设为当前时间 - 3分钟
-last_check = int(time.time()) - 180
+# 上次检查的时间戳，初始设为当前时间 - 10分钟
+last_check = int(time.time()) - 600
 # 保存已推送过的新贴链接
 pushed_posts = set()
 
@@ -120,9 +120,9 @@ async def check_hostloc():
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
 async def run_scheduler():
-    # 每隔1-2分钟执行一次检查
+    # 每隔6-8分钟执行一次检查
     while True:
-        await asyncio.sleep(random.uniform(60, 120))
+        await asyncio.sleep(random.uniform(360, 480))
         asyncio.create_task(check_hostloc())
 
 # 启动定时任务
