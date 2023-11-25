@@ -1,4 +1,5 @@
-借助ChatGPT开发的hostloc新帖推送
+借助ChatGPT开发的hostloc新帖推送  
+⚠️注意：若hostloc开启了反爬，则代码失效
 ### 使用方法
 #### 一、新建`.env`文件，编辑以下内容并保存
 ```bash
