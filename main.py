@@ -42,7 +42,7 @@ def parse_post_content(post_link):
         
         # 提取帖子内容（含图片、附件等）
         content = ""
-        for item in post_content:
+        for i, item in enumerate(post_content):
             if item.img:  # 处理图片
                 img_src = item.img['src']
                 content += f"![Image]({img_src})\n"
