@@ -24,7 +24,7 @@ BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKE
 last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
 pushed_posts = set()
-# 保存登录后的cookies
+# 保存登录后的cookie
 cookies = None
 
 # 登录hostloc.com账号并获取cookie
@@ -38,7 +38,10 @@ def login_hostloc():
         "quickforward": "yes",
         "handlekey": "ls"
     }
-    response = requests.post("https://www.hostloc.com/member.php?mod=logging&action=login&loginsubmit=yes&infloat=yes&lssubmit=yes&inajax=1", data=login_data)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Mobile Safari/537.36'
+    }
+    response = requests.post("https://www.hostloc.com/member.php?mod=logging&action=login&loginsubmit=yes&infloat=yes&lssubmit=yes&inajax=1", data=login_data, headers=headers)
 
     # 检查登录是否成功
     if "您已经顺利登录" in response.text:
@@ -64,26 +67,26 @@ async def check_hostloc():
     global last_check, cookies
     # 对hostloc.com发起请求，获取最新的帖子链接和标题
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; Pixel 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.66 Mobile Safari/537.36'
     }
 
     # 登录hostloc.com账号
     if login_hostloc():
-        response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers, cookies=cookies)
+        response = requests.get("https://www.hostloc.com/forum.php?mobile=2&mod=guide&view=newthread", headers=headers, cookies=cookies)
         html_content = response.text
 
         # 解析HTML内容，提取最新的帖子链接和标题
         soup = BeautifulSoup(html_content, 'html.parser')
-        post_links = soup.select("a.s.xst")
+        post_links = soup.select("li.xi1 a[href^='thread-']")
 
         # 遍历最新的帖子链接
         for link in reversed(post_links):  # 遍历最新的帖子链接，从后往前
             post_link = "https://www.hostloc.com/" + link['href']
             post_title = link.string
-            post_poster = link.parent.parent.find('cite').string
+            post_poster = link.parent.find_next_sibling('span', class_='byuser').a.string.strip()
 
             # 获取帖子发布时间
-            post_time_str = link.parent.parent.parent.find('td', class_='by').em.span.text
+            post_time_str = link.find_previous_sibling('em').text
             post_time = parse_relative_time(post_time_str)
 
             # 如果没有发布人屏蔽，且没有指定关键字或帖子链接不在已推送过的新贴集合中，
