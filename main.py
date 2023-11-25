@@ -40,19 +40,10 @@ def parse_post_content(post_link):
         soup = BeautifulSoup(html_content, 'html.parser')
         post_content = soup.select(".t_fsz")
         
-        # 提取帖子内容（含图片、附件等）
+        # 提取发帖内容
         content = ""
-        for i, item in enumerate(post_content):
-            if item.img:  # 处理图片
-                img_src = item.img['src']
-                content += f"![Image]({img_src})\n"
-            elif item.a and item.a.get('href'):  # 处理附件
-                attachment_link = item.a['href']
-                content += f"[Attachment]({attachment_link})\n"
-                
-            # 添加文字部分
-            if item.text.strip():  # 处理普通文本
-                content += f"{item.text}\n"
+        if post_content:
+            content = post_content[0].get_text(strip=True)
 
         return content
         
