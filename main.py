@@ -97,9 +97,12 @@ async def check_hostloc():
             last_check = post_time
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
-async def run():
-    await check_hostloc()
+async def run_scheduler():
+    # 每隔1-2分钟执行一次检查
+    while True:
+        await asyncio.sleep(random.uniform(60, 120))
+        asyncio.create_task(check_hostloc())
 
 # 启动定时任务
 if __name__ == "__main__":
-    asyncio.run(run())
+    asyncio.run(run_scheduler())
