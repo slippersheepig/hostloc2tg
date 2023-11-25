@@ -72,16 +72,16 @@ async def check_hostloc():
 
         # 解析HTML内容，提取最新的帖子链接和标题
         soup = BeautifulSoup(html_content, 'html.parser')
-        post_links = soup.select(".xst")
+        post_links = soup.select("th.new span a[href^='thread-']")
 
         # 遍历最新的帖子链接
         for link in reversed(post_links):  # 遍历最新的帖子链接，从后往前
             post_link = "https://www.hostloc.com/" + link['href']
             post_title = link.string
-            post_poster = link.parent.find_previous('a').string
+            post_poster = link.parent.parent.find('cite').string
 
             # 获取帖子发布时间
-            post_time_str = link.parent.find_next('em').text
+            post_time_str = link.parent.parent.parent.find('td', class_='by').em.span.text
             post_time = parse_relative_time(post_time_str)
 
             # 如果没有发布人屏蔽，且没有指定关键字或帖子链接不在已推送过的新贴集合中，
@@ -97,12 +97,9 @@ async def check_hostloc():
             last_check = post_time
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
-async def run_scheduler():
-    # 每隔1-2分钟执行一次检查
-    while True:
-        await asyncio.sleep(random.uniform(60, 120))
-        asyncio.create_task(check_hostloc())
+async def run():
+    await check_hostloc()
 
 # 启动定时任务
 if __name__ == "__main__":
-    asyncio.run(run_scheduler())
+    asyncio.run(run())
