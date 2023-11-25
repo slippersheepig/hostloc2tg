@@ -72,7 +72,7 @@ async def check_hostloc():
 
     # 登录hostloc.com账号
     if login_hostloc():
-        response = requests.get("https://www.hostloc.com/forum.php?mobile=2&mod=guide&view=newthread", headers=headers, cookies=cookies)
+        response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers, cookies=cookies)
         html_content = response.text
 
         # 解析HTML内容，提取最新的帖子链接和标题
@@ -89,6 +89,7 @@ async def check_hostloc():
             post_time_str = link.find_previous_sibling('em').text
             post_time = parse_relative_time(post_time_str)
 
+            # 如果没有发布人屏蔽，且没有指定关键字或```python
             # 如果没有发布人屏蔽，且没有指定关键字或帖子链接不在已推送过的新贴集合中，
             # 并且发布时间在上次检查时间之后，并且标题包含白名单关键字，
             # 并且标题不包含黑名单关键字，发送到Telegram Channel并将链接加入已推送集合
@@ -97,9 +98,8 @@ async def check_hostloc():
                     pushed_posts.add(post_link)
                     await send_message(f"{post_title}\n{post_link}")
 
-        # 更新上次检查的时间为最后一个帖子的发布时间
-        if post_links and post_time is not None:
-            last_check = post_time
+        # 更新上次检查的时间为当前时间
+        last_check = int(time.time())
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
 async def run_scheduler():
