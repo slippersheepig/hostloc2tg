@@ -39,16 +39,16 @@ def parse_post_content(post_link):
 
         soup = BeautifulSoup(html_content, 'html.parser')
         post_content = soup.select(".t_fsz")
-        
+
         # 提取发帖内容
         content = ""
         if post_content:
             content = post_content[0].get_text(strip=True)
 
         return content
-        
+
     except (requests.RequestException, ValueError) as e:
-        print(f"Error occurred: {e}")
+        print(f"发生错误: {e}")
         return ""
 
 def parse_relative_time(relative_time_str):
@@ -89,20 +89,34 @@ async def check_hostloc():
             if post_poster not in BLOCKED_POSTERS and post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     pushed_posts.add(post_link)
-                    
+
                     # 解析帖子内容（含图片、附件等）
                     post_content = parse_post_content(post_link)
 
                     # 构建消息文本，包括帖子标题和内容
                     message = f"{post_title}\n{post_link}\n{post_content}"
+
+                    # 判断是否有图片或附件，如果有则添加到消息文本中
+                    soup = BeautifulSoup(html_content, 'html.parser')
+                    attachments = soup.select(".pattl+.pattl")
+                    images = soup.select(".pcb img")
+
+                    if attachments:
+                        attachment_urls = [attachment['href'] for attachment in attachments]
+                        message += "\n附件：" + ", ".join(attachment_urls)
+
+                    if images:
+                        image_urls = [image['file'] for image in images]
+                        message += "\n图片：" + ", ".join(image_urls)
+
                     await send_message(message)
 
         # 更新上次检查的时间为最后一个帖子的发布时间
         if post_links and post_time is not None:
             last_check = post_time
-            
+
     except (requests.RequestException, ValueError, KeyError) as e:
-        print(f"Error occurred: {e}")
+        print(f"发生错误: {e}")
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
 async def run_scheduler():
