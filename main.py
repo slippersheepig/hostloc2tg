@@ -74,16 +74,16 @@ async def check_hostloc():
 
         # 解析HTML内容，提取最新的帖子链接和标题
         soup = BeautifulSoup(html_content, 'html.parser')
-        post_links = soup.select("tr.thread > th > a.s")
+        post_links = soup.select("a.s.xst")
 
         # 遍历最新的帖子链接
         for link in reversed(post_links):  # 遍历最新的帖子链接，从后往前
             post_link = "https://www.hostloc.com/" + link['href']
             post_title = link.string
-            post_poster = link.parent.find_all('cite')[1].string
+            post_poster = link.parent.parent.find('cite').string
 
             # 获取帖子发布时间
-            post_time_str = link.parent.parent.find('td', class_='by').em.span.text
+            post_time_str = link.parent.parent.parent.find('td', class_='by').em.span.text
             post_time = parse_relative_time(post_time_str)
 
             # 如果没有发布人屏蔽，且没有指定关键字或帖子链接不在已推送过的新贴集合中，
