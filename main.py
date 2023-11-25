@@ -24,7 +24,7 @@ BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKE
 last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
 pushed_posts = set()
-# 保存登录后的cookie
+# 保存登录后的cookies
 cookies = None
 
 # 登录hostloc.com账号并获取cookie
@@ -74,16 +74,16 @@ async def check_hostloc():
 
         # 解析HTML内容，提取最新的帖子链接和标题
         soup = BeautifulSoup(html_content, 'html.parser')
-        post_links = soup.select("th.new span a[href^='thread-']")
+        post_links = soup.select("tr.thread > th > a.s")
 
         # 遍历最新的帖子链接
         for link in reversed(post_links):  # 遍历最新的帖子链接，从后往前
             post_link = "https://www.hostloc.com/" + link['href']
             post_title = link.string
-            post_poster = link.parent.parent.find('cite').string
+            post_poster = link.parent.find_all('cite')[1].string
 
             # 获取帖子发布时间
-            post_time_str = link.parent.parent.parent.find('td', class_='by').em.span.text
+            post_time_str = link.parent.parent.find('td', class_='by').em.span.text
             post_time = parse_relative_time(post_time_str)
 
             # 如果没有发布人屏蔽，且没有指定关键字或帖子链接不在已推送过的新贴集合中，
