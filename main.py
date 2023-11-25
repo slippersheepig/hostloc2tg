@@ -89,7 +89,6 @@ async def check_hostloc():
             post_time_str = link.find_previous_sibling('em').text
             post_time = parse_relative_time(post_time_str)
 
-            # 如果没有发布人屏蔽，且没有指定关键字或```python
             # 如果没有发布人屏蔽，且没有指定关键字或帖子链接不在已推送过的新贴集合中，
             # 并且发布时间在上次检查时间之后，并且标题包含白名单关键字，
             # 并且标题不包含黑名单关键字，发送到Telegram Channel并将链接加入已推送集合
