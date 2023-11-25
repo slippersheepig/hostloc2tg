@@ -15,10 +15,10 @@ BOT_TOKEN = config["BOT_TOKEN"]
 # Telegram Channel 的 ID
 CHANNEL_ID = config["CHANNEL_ID"]
 # 关键字过滤
-KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST").split(',') if config.get("KEYWORDS_WHITELIST") else []
-KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDS_BLACKLIST") else []
+KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST", "").split(',')
+KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST", "").split(',')
 # 发帖人屏蔽名单
-BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKED_POSTERS") else []
+BLOCKED_POSTERS = config.get("BLOCKED_POSTERS", "").split(',')
 
 # 上次检查的时间戳，初始设为当前时间 - 10分钟
 last_check = int(time.time()) - 600
@@ -108,6 +108,9 @@ async def check_hostloc():
                     if images:
                         image_urls = [image['file'] for image in images]
                         message += "\n图片：" + ", ".join(image_urls)
+                        
+                    # 识别[img][/img]作为标签的图片并替换为Markdown格式
+                    message = message.replace("[img]", "![Image](").replace("[/img]", ")")
 
                     await send_message(message)
 
