@@ -48,7 +48,10 @@ def parse_post_content(post_link):
                 content += f"![Image]({img_src})\n"
             elif item.a and item.a.get('href'):  # 处理附件
                 attachment_link = item.a['href']
-                content += f"[Attachment]({attachment_link})\n"
+                if attachment_link.endswith(('.jpg', '.jpeg', '.png', '.gif')):  # 处理图片附件
+                    content += f"![Attachment]({attachment_link})\n"
+                else:  # 其他类型的附件
+                    content += f"[Attachment]({attachment_link})\n"
             else:  # 处理普通文本
                 content += f"{item.text}\n"
 
@@ -92,8 +95,7 @@ async def check_hostloc():
             post_time = parse_relative_time(post_time_str)
 
             # 如果没有发布人屏蔽，且没有指定关键字或帖子链接不在已推送过的新贴集合中，
-            # 并且发布时间在上次检查时间之后，并且标题包含白名单关键字，
-            # 并且标题不包含黑名单关键字，发送到Telegram Channel并将链接加入已推送集合
+            # 并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
             if post_poster not in BLOCKED_POSTERS and post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     pushed_posts.add(post_link)
@@ -102,7 +104,7 @@ async def check_hostloc():
                     post_content = parse_post_content(post_link)
 
                     # 构建消息文本，包括帖子标题和内容
-                    message = f"{post_title}\n{post_link}\n{post_content}"
+                    message = f"{post_title}\n{post_link}\n\n{post_content}"
                     await send_message(message)
 
         # 更新上次检查的时间为最后一个帖子的发布时间
