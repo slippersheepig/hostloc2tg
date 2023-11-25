@@ -24,23 +24,25 @@ BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKE
 last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
 pushed_posts = set()
+# 保存登录后的cookie
+cookies = None
 
-# 登录hostloc.com账号
+# 登录hostloc.com账号并获取cookie
 def login_hostloc():
+    global cookies
     # 使用requests库发送登录请求
     login_data = {
         "username": config["HOSTLOC_USERNAME"],
         "password": config["HOSTLOC_PASSWORD"],
         "fastloginfield": "login",
         "quickforward": "yes",
-        "handlekey": "ls",
-        "username": config["HOSTLOC_USERNAME"],
-        "password": config["HOSTLOC_PASSWORD"]
+        "handlekey": "ls"
     }
     response = requests.post("https://www.hostloc.com/member.php?mod=logging&action=login&loginsubmit=yes&infloat=yes&lssubmit=yes&inajax=1", data=login_data)
 
     # 检查登录是否成功
     if "您已经顺利登录" in response.text:
+        cookies = response.cookies
         return True
     else:
         return False
@@ -59,7 +61,7 @@ def parse_relative_time(relative_time_str):
 
 # 检查 hostloc.com 的新贴子
 async def check_hostloc():
-    global last_check
+    global last_check, cookies
     # 对hostloc.com发起请求，获取最新的帖子链接和标题
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -67,7 +69,7 @@ async def check_hostloc():
 
     # 登录hostloc.com账号
     if login_hostloc():
-        response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
+        response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers, cookies=cookies)
         html_content = response.text
 
         # 解析HTML内容，提取最新的帖子链接和标题
