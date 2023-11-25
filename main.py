@@ -30,6 +30,34 @@ async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
     await bot.send_message(chat_id=CHANNEL_ID, text=msg)
 
+# 解析帖子内容（含图片、附件等）
+def parse_post_content(post_link):
+    try:
+        response = requests.get(post_link)
+        response.raise_for_status()  # 检查请求是否成功
+        html_content = response.text
+
+        soup = BeautifulSoup(html_content, 'html.parser')
+        post_content = soup.select(".t_fsz")
+        
+        # 提取帖子内容（含图片、附件等）
+        content = ""
+        for item in post_content:
+            if item.img:  # 处理图片
+                img_src = item.img['src']
+                content += f"![Image]({img_src})\n"
+            elif item.a and item.a.get('href'):  # 处理附件
+                attachment_link = item.a['href']
+                content += f"[Attachment]({attachment_link})\n"
+            else:  # 处理普通文本
+                content += f"{item.text}\n"
+
+        return content
+        
+    except (requests.RequestException, ValueError) as e:
+        print(f"Error occurred: {e}")
+        return ""
+
 def parse_relative_time(relative_time_str):
     if "分钟前" in relative_time_str:
         minutes_ago = int(relative_time_str.split()[0])
@@ -69,7 +97,13 @@ async def check_hostloc():
             if post_poster not in BLOCKED_POSTERS and post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     pushed_posts.add(post_link)
-                    await send_message(f"{post_title}\n{post_link}")
+                    
+                    # 解析帖子内容（含图片、附件等）
+                    post_content = parse_post_content(post_link)
+
+                    # 构建消息文本，包括帖子标题和内容
+                    message = f"{post_title}\n{post_link}\n{post_content}"
+                    await send_message(message)
 
         # 更新上次检查的时间为最后一个帖子的发布时间
         if post_links and post_time is not None:
