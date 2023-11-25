@@ -49,7 +49,9 @@ def parse_post_content(post_link):
             elif item.a and item.a.get('href'):  # 处理附件
                 attachment_link = item.a['href']
                 content += f"[Attachment]({attachment_link})\n"
-            else:  # 处理普通文本
+                
+            # 添加文字部分
+            if item.text.strip():  # 处理普通文本
                 content += f"{item.text}\n"
 
         return content
@@ -101,7 +103,7 @@ async def check_hostloc():
                     post_content = parse_post_content(post_link)
 
                     # 构建消息文本，包括帖子标题和内容
-                    message = f"{post_title}\n{post_link}\n\n{post_content}"
+                    message = f"{post_title}\n{post_link}\n{post_content}"
                     await send_message(message)
 
         # 更新上次检查的时间为最后一个帖子的发布时间
