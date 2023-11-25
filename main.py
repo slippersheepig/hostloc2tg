@@ -48,10 +48,7 @@ def parse_post_content(post_link):
                 content += f"![Image]({img_src})\n"
             elif item.a and item.a.get('href'):  # 处理附件
                 attachment_link = item.a['href']
-                if attachment_link.endswith(('.jpg', '.jpeg', '.png', '.gif')):  # 处理图片附件
-                    content += f"![Attachment]({attachment_link})\n"
-                else:  # 其他类型的附件
-                    content += f"[Attachment]({attachment_link})\n"
+                content += f"[Attachment]({attachment_link})\n"
             else:  # 处理普通文本
                 content += f"{item.text}\n"
 
