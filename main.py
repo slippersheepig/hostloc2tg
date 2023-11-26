@@ -16,10 +16,10 @@ BOT_TOKEN = config["BOT_TOKEN"]
 # Telegram Channel 的 ID
 CHANNEL_ID = config["CHANNEL_ID"]
 # 关键字过滤
-KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST").split(',') if config.get("KEYWORDS_WHITELIST") else []
-KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDS_BLACKLIST") else []
+KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST", "").split(',')
+KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST", "").split(',')
 # 发帖人屏蔽名单
-BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKED_POSTERS") else []
+BLOCKED_POSTERS = config.get("BLOCKED_POSTERS", "").split(',')
 
 # 上次检查的时间戳，初始设为当前时间 - 3分钟
 last_check = int(time.time()) - 180
@@ -88,6 +88,13 @@ async def check_hostloc():
             post_title = escape_special_characters(unescape(link.string))
             post_poster = unescape(link.parent.find_previous('a').string)
 
+            # 解析发帖人
+            previous_link = link.parent.find_previous('a')
+            if previous_link:
+                post_poster = unescape(previous_link.string)
+            else:
+                post_poster = ""
+    
             # 获取帖子发布时间
             post_time_str = link.parent.find_next('em').text
             post_time = parse_relative_time(post_time_str)
