@@ -1,11 +1,12 @@
+import asyncio
 import requests
 import time
 import random
-import asyncio
 import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from html import unescape
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -20,15 +21,15 @@ KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST", "").split(',')
 # 发帖人屏蔽名单
 BLOCKED_POSTERS = config.get("BLOCKED_POSTERS", "").split(',')
 
-# 上次检查的时间戳，初始设为当前时间 - 10分钟
-last_check = int(time.time()) - 600
+# 上次检查的时间戳，初始设为当前时间 - 3分钟
+last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
 pushed_posts = set()
 
 # 发送消息到 Telegram Channel
 async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
-    await bot.send_message(chat_id=CHANNEL_ID, text=msg)
+    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode=telegram.ParseMode.MARKDOWN)
 
 # 解析帖子内容（含图片、附件等）
 def parse_post_content(post_link):
@@ -58,6 +59,13 @@ def parse_relative_time(relative_time_str):
     else:
         return None
 
+# 转义特殊字符
+def escape_special_characters(text):
+    special_characters = ['[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+    for char in special_characters:
+        text = text.replace(char, f'\\{char}')
+    return text
+
 # 检查 hostloc.com 的新贴子
 async def check_hostloc():
     global last_check
@@ -77,8 +85,8 @@ async def check_hostloc():
         # 遍历最新的帖子链接
         for link in reversed(post_links):  # 遍历最新的帖子链接，从后往前
             post_link = "https://www.hostloc.com/" + link['href']
-            post_title = link.string
-            post_poster = link.parent.find_previous('a').string
+            post_title = escape_special_characters(unescape(link.string))
+            post_poster = unescape(link.parent.find_previous('a').string)
 
             # 获取帖子发布时间
             post_time_str = link.parent.find_next('em').text
@@ -89,28 +97,23 @@ async def check_hostloc():
             if post_poster not in BLOCKED_POSTERS and post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     pushed_posts.add(post_link)
-
                     # 解析帖子内容（含图片、附件等）
                     post_content = parse_post_content(post_link)
 
                     # 构建消息文本，包括帖子标题和内容
-                    message = f"{post_title}\n{post_link}\n{post_content}"
+                    message = f"*{post_title}*\n[链接]({post_link})\n{post_content}"
 
                     # 判断是否有图片或附件，如果有则添加到消息文本中
-                    soup = BeautifulSoup(html_content, 'html.parser')
                     attachments = soup.select(".pattl+.pattl")
                     images = soup.select(".pcb img")
 
                     if attachments:
                         attachment_urls = [attachment['href'] for attachment in attachments]
-                        message += "\n附件：" + ", ".join(attachment_urls)
+                        message += "\n\n附件：\n" + "\n".join(f"[附件 {i+1}]({url})" for i, url in enumerate(attachment_urls))
 
                     if images:
                         image_urls = [image['file'] for image in images]
-                        message += "\n图片：" + ", ".join(image_urls)
-                        
-                    # 识别[img][/img]作为标签的图片并替换为Markdown格式
-                    message = message.replace("[img]", "![Image](").replace("[/img]", ")")
+                        message += "\n\n图片：\n" + "\n".join(f"![图片 {i+1}]({url})" for i, url in enumerate(image_urls))
 
                     await send_message(message)
 
@@ -123,9 +126,9 @@ async def check_hostloc():
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
 async def run_scheduler():
-    # 每隔6-8分钟执行一次检查
+    # 每隔1-2分钟执行一次检查
     while True:
-        await asyncio.sleep(random.uniform(360, 480))
+        await asyncio.sleep(random.uniform(60, 120))
         asyncio.create_task(check_hostloc())
 
 # 启动定时任务
