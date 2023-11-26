@@ -101,7 +101,7 @@ async def check_hostloc():
                     post_content = parse_post_content(post_link)
 
                     # 构建消息文本，包括帖子标题和内容
-                    message = f"*{post_title}*\n[链接]({post_link})\n{post_content}"
+                    message = f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
 
                     # 判断是否有图片或附件，如果有则添加到消息文本中
                     attachments = soup.select(".pattl+.pattl")
@@ -109,11 +109,11 @@ async def check_hostloc():
 
                     if attachments:
                         attachment_urls = [attachment['href'] for attachment in attachments]
-                        message += "\n\n附件：\n" + "\n".join(f"[附件 {i+1}]({url})" for i, url in enumerate(attachment_urls))
+                        message += "\n附件：" + "\n".join(f"[附件 {i+1}]({url})" for i, url in enumerate(attachment_urls))
 
                     if images:
                         image_urls = [image['file'] for image in images]
-                        message += "\n\n图片：\n" + "\n".join(f"![图片 {i+1}]({url})" for i, url in enumerate(image_urls))
+                        message += "\n图片：" + "\n".join(f"![图片 {i+1}]({url})" for i, url in enumerate(image_urls))
 
                     await send_message(message)
 
