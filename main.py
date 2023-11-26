@@ -2,6 +2,7 @@ import asyncio
 import requests
 import random
 import telegram
+import time
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
