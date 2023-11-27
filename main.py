@@ -38,18 +38,25 @@ def parse_post_content(post_link):
         html_content = response.text
 
         soup = BeautifulSoup(html_content, 'html.parser')
-        post_content = soup.select(".t_fsz")
+        post_content_tag = soup.select_one(".t_fsz")
 
         # 提取发帖内容
         content = ""
-        if post_content:
-            content = post_content[0].get_text(strip=True)
+        if post_content_tag:
+            content = post_content_tag.get_text(strip=True)
 
-        return content
+        # 获取图片和附件链接
+        attachments = soup.select(".pattl+.pattl")
+        images = soup.select(".pcb img")
+
+        attachment_urls = [attachment['href'] for attachment in attachments]
+        image_urls = [image['file'] for image in images]
+
+        return content, attachment_urls, image_urls
 
     except (requests.RequestException, ValueError) as e:
         print(f"发生错误: {e}")
-        return ""
+        return "", [], []
 
 def parse_relative_time(relative_time_str):
     if "分钟前" in relative_time_str:
@@ -75,7 +82,7 @@ async def check_hostloc():
         post_links = soup.select(".xst")
 
         # 遍历最新的帖子链接
-        for link in reversed(post_links):  # 遍历最新的帖子链接，从后往前
+        for link in reversed(post_links):
             post_link = "https://www.hostloc.com/" + link['href']
             post_title = link.string
             post_poster = link.parent.find_previous('a').string
@@ -91,22 +98,16 @@ async def check_hostloc():
                     pushed_posts.add(post_link)
 
                     # 解析帖子内容（含图片、附件等）
-                    post_content = parse_post_content(post_link)
+                    post_content, attachment_urls, image_urls = parse_post_content(post_link)
 
                     # 构建消息文本，包括帖子标题和内容
                     message = f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
 
                     # 判断是否有图片或附件，如果有则添加到消息文本中
-                    soup = BeautifulSoup(html_content, 'html.parser')
-                    attachments = soup.select(".pattl+.pattl")
-                    images = soup.select(".pcb img")
-
-                    if attachments:
-                        attachment_urls = [attachment['href'] for attachment in attachments]
+                    if attachment_urls:
                         message += "\n附件：" + ", ".join(attachment_urls)
 
-                    if images:
-                        image_urls = [image['file'] for image in images]
+                    if image_urls:
                         message += "\n图片：" + ", ".join(image_urls)
 
                     await send_message(message)
