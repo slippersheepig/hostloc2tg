@@ -6,8 +6,6 @@ import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-import bbcode
-import re
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -47,19 +45,11 @@ def parse_post_content(post_link):
         if post_content_tag:
             content = post_content_tag.decode_contents()
 
-            # 替换不支持的HTML标签
-            content = replace_br_tag(content)
-
         return content
 
     except (requests.RequestException, ValueError) as e:
         print(f"发生错误: {e}")
         return ""
-
-def replace_br_tag(bbcode_content):
-    # 使用正则表达式将[br]替换为HTML换行标签<br>
-    replaced_content = re.sub(r'\[br\]', '<br>', bbcode_content)
-    return replaced_content
 
 def parse_relative_time(relative_time_str):
     if "分钟前" in relative_time_str:
@@ -67,11 +57,6 @@ def parse_relative_time(relative_time_str):
         return int(time.time()) - minutes_ago * 60
     else:
         return None
-
-def convert_bbcode_to_html(bbcode_content):
-    # 使用bbcode库的渲染器进行转换
-    html_content = bbcode.render_html(bbcode_content)
-    return html_content
 
 # 检查 hostloc.com 的新贴子
 async def check_hostloc():
@@ -107,9 +92,6 @@ async def check_hostloc():
 
                     # 解析帖子内容
                     post_content = parse_post_content(post_link)
-
-                    # 转换BBCode格式为HTML格式
-                    post_content = convert_bbcode_to_html(post_content)
 
                     # 构建消息文本，包括帖子标题和内容
                     message = f"<b>{post_title}</b>\n{post_link}\n{post_content}"
