@@ -6,6 +6,7 @@ import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+import html  # 导入html模块
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -43,7 +44,7 @@ def parse_post_content(post_link):
         # 提取发帖内容
         content = ""
         if post_content_tag:
-            content = post_content_tag.decode_contents()
+            content = html.escape(post_content_tag.decode_contents())  # 使用html.escape转义HTML内容
 
         return content
 
