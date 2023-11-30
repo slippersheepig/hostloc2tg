@@ -6,7 +6,7 @@ import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-import bbcode  # 导入 bbcode 库
+from bbcode import Parser
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -45,21 +45,22 @@ def parse_post_content(post_link):
         content = ""
         if post_content_tag:
             content = post_content_tag.decode_contents()
-
-        # 转换BBCode到Markdown
-        content = convert_bbcode_to_markdown(content)
-
         return content
 
     except (requests.RequestException, ValueError) as e:
         print(f"发生错误: {e}")
         return ""
 
-# 自定义函数将BBCode转换为Markdown
+def parse_relative_time(relative_time_str):
+    if "分钟前" in relative_time_str:
+        minutes_ago = int(relative_time_str.split()[0])
+        return int(time.time()) - minutes_ago * 60
+    else:
+        return None
+
 def convert_bbcode_to_markdown(bbcode_content):
-    # 这里可以根据实际情况添加更多的转换规则
-    # 这只是一个简单的例子
-    markdown_content = bbcode_content.replace('[b]', '**').replace('[/b]', '**')
+    parser = Parser()
+    markdown_content = parser.to_md(bbcode_content)
     return markdown_content
 
 # 检查 hostloc.com 的新贴子
@@ -96,6 +97,9 @@ async def check_hostloc():
 
                     # 解析帖子内容
                     post_content = parse_post_content(post_link)
+
+                    # 转换BBCode格式为Markdown格式
+                    post_content = convert_bbcode_to_markdown(post_content)
 
                     # 构建消息文本，包括帖子标题和内容
                     message = f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
