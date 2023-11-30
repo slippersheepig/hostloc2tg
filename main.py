@@ -3,9 +3,11 @@ import time
 import random
 import asyncio
 import telegram
+import aiohttp
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from bbcode import Parser
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -15,10 +17,10 @@ BOT_TOKEN = config["BOT_TOKEN"]
 # Telegram Channel 的 ID
 CHANNEL_ID = config["CHANNEL_ID"]
 # 关键字过滤
-KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST").split(',') if config.get("KEYWORDS_WHITELIST") else []
-KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDS_BLACKLIST") else []
+KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST", "").split(',')
+KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST", "").split(',')
 # 发帖人屏蔽名单
-BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKED_POSTERS") else []
+BLOCKED_POSTERS = config.get("BLOCKED_POSTERS", "").split(',')
 
 # 上次检查的时间戳，初始设为当前时间 - 3分钟
 last_check = int(time.time()) - 180
@@ -60,6 +62,11 @@ def parse_relative_time(relative_time_str):
     else:
         return None
 
+def convert_bbcode_to_markdown(bbcode_content):
+    parser = Parser()
+    markdown_content = parser.to_md(bbcode_content)
+    return markdown_content
+
 async def check_and_send_message(post_link, post_title, post_poster, post_time):
     global last_check
     if (
@@ -76,8 +83,11 @@ async def check_and_send_message(post_link, post_title, post_poster, post_time):
 
             post_content, attachment_urls, image_urls = await parse_post_content(post_link)
 
+            # 转换BBCode格式为Markdown格式
+            post_content = convert_bbcode_to_markdown(post_content)
+
             message = (
-                f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
+                f"**{post_title}**\n[帖子链接]({post_link})\n{post_content}"
             )
 
             if attachment_urls:
