@@ -1,6 +1,6 @@
 requests
 schedule
+bbcode
 beautifulsoup4
 python-dotenv
 python-telegram-bot
-bbcode-to-markdown
