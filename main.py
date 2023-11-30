@@ -45,7 +45,7 @@ def parse_post_content(post_link):
         # 提取发帖内容
         content = ""
         if post_content_tag:
-            content = html.escape(post_content_tag.decode_contents())  # 使用html.escape转义HTML内容
+            content = post_content_tag.decode_contents()
 
         return content
 
