@@ -30,7 +30,7 @@ async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
     await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
-# 解析帖子内容（含图片、附件等）
+# 解析帖子内容
 def parse_post_content(post_link):
     try:
         response = requests.get(post_link)
@@ -45,25 +45,11 @@ def parse_post_content(post_link):
         if post_content_tag:
             content = post_content_tag.get_text(strip=True)
 
-        # 获取图片和附件链接
-        attachments = soup.select(".pattl+.pattl")
-        images = soup.select(".pcb img")
-
-        attachment_urls = [attachment['href'] for attachment in attachments]
-        image_urls = [image['file'] for image in images]
-
-        return content, attachment_urls, image_urls
+        return content
 
     except (requests.RequestException, ValueError) as e:
         print(f"发生错误: {e}")
-        return "", [], []
-
-def parse_relative_time(relative_time_str):
-    if "分钟前" in relative_time_str:
-        minutes_ago = int(relative_time_str.split()[0])
-        return int(time.time()) - minutes_ago * 60
-    else:
-        return None
+        return ""
 
 # 检查 hostloc.com 的新贴子
 async def check_hostloc():
@@ -97,18 +83,11 @@ async def check_hostloc():
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     pushed_posts.add(post_link)
 
-                    # 解析帖子内容（含图片、附件等）
-                    post_content, attachment_urls, image_urls = parse_post_content(post_link)
+                    # 解析帖子内容
+                    post_content = parse_post_content(post_link)
 
                     # 构建消息文本，包括帖子标题和内容
                     message = f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
-
-                    # 判断是否有图片或附件，如果有则添加到消息文本中
-                    if attachment_urls:
-                        message += "\n附件：" + ", ".join(attachment_urls)
-
-                    if image_urls:
-                        message += "\n图片：" + ", ".join(image_urls)
 
                     await send_message(message)
 
