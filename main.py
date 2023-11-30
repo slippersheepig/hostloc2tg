@@ -6,6 +6,7 @@ import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+from bbcode_to_markdown import to_markdown
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -43,7 +44,10 @@ def parse_post_content(post_link):
         # 提取发帖内容
         content = ""
         if post_content_tag:
-            content = post_content_tag.get_text(strip=True)
+            content = post_content_tag.decode_contents()
+
+        # 转换BBCode到Markdown
+        content = to_markdown(content)
 
         return content
 
