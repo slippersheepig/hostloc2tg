@@ -6,7 +6,7 @@ import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from bbcode import Parser
+from bbcode import Parser, formatter
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -59,8 +59,9 @@ def parse_relative_time(relative_time_str):
         return None
 
 def convert_bbcode_to_markdown(bbcode_content):
-    parser = Parser()
-    markdown_content = parser.to_md(bbcode_content)
+    # 使用bbcode库的Formatter进行转换
+    formatter_instance = formatter.Formatter()
+    markdown_content = formatter_instance.format(bbcode_content)
     return markdown_content
 
 # 检查 hostloc.com 的新贴子
