@@ -1,4 +1,5 @@
 requests
+aiohttp
 schedule
 beautifulsoup4
 python-dotenv
