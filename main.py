@@ -6,7 +6,6 @@ import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-import html  # 导入html模块
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -29,10 +28,9 @@ pushed_posts = set()
 # 发送消息到 Telegram Channel
 async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
-    escaped_msg = html.escape(msg)  # 只对消息文本进行HTML转义
-    await bot.send_message(chat_id=CHANNEL_ID, text=escaped_msg, parse_mode='HTML')
+    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
-# 解析帖子内容
+# 解析帖子内容（仅含文字内容）
 def parse_post_content(post_link):
     try:
         response = requests.get(post_link)
@@ -45,7 +43,7 @@ def parse_post_content(post_link):
         # 提取发帖内容
         content = ""
         if post_content_tag:
-            content = post_content_tag.decode_contents()
+            content = post_content_tag.get_text(strip=True)
 
         return content
 
@@ -92,11 +90,11 @@ async def check_hostloc():
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     pushed_posts.add(post_link)
 
-                    # 解析帖子内容
+                    # 解析帖子内容（仅含文字内容）
                     post_content = parse_post_content(post_link)
 
                     # 构建消息文本，包括帖子标题和内容
-                    message = f"<b>{post_title}</b>\n{post_link}\n{post_content}"
+                    message = f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
 
                     await send_message(message)
 
