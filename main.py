@@ -56,9 +56,9 @@ def parse_post_content(post_link):
         print(f"发生错误: {e}")
         return ""
 
-def replace_br_tag(html_content):
-    # 使用正则表达式将<br>替换为HTML换行标签\n
-    replaced_content = re.sub(r'<\s*br\s*/?>', '\n', html_content)
+def replace_br_tag(bbcode_content):
+    # 使用正则表达式将[br]替换为HTML换行标签<br>
+    replaced_content = re.sub(r'\[br\]', '<br>', bbcode_content)
     return replaced_content
 
 def parse_relative_time(relative_time_str):
