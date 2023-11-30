@@ -94,7 +94,7 @@ async def check_hostloc():
                     post_content = parse_post_content(post_link)
 
                     # 构建消息文本，包括帖子标题和内容
-                    message = f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
+                    message = f"*{post_title}*\n{post_link}\n{post_content}"
 
                     await send_message(message)
 
