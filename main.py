@@ -7,6 +7,7 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import bbcode
+import re
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -45,11 +46,20 @@ def parse_post_content(post_link):
         content = ""
         if post_content_tag:
             content = post_content_tag.decode_contents()
+
+            # 替换不支持的HTML标签
+            content = replace_br_tag(content)
+
         return content
 
     except (requests.RequestException, ValueError) as e:
         print(f"发生错误: {e}")
         return ""
+
+def replace_br_tag(html_content):
+    # 使用正则表达式将<br>替换为HTML换行标签\n
+    replaced_content = re.sub(r'<\s*br\s*/?>', '\n', html_content)
+    return replaced_content
 
 def parse_relative_time(relative_time_str):
     if "分钟前" in relative_time_str:
@@ -59,7 +69,7 @@ def parse_relative_time(relative_time_str):
         return None
 
 def convert_bbcode_to_html(bbcode_content):
-    # 使用bbcode库的Formatter进行转换
+    # 使用bbcode库的渲染器进行转换
     html_content = bbcode.render_html(bbcode_content)
     return html_content
 
