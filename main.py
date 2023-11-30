@@ -43,17 +43,11 @@ async def parse_post_content(post_link):
         post_content_tag = soup.select_one(".t_fsz")
 
         content = post_content_tag.get_text(strip=True) if post_content_tag else ""
-        attachments = soup.select(".pattl+.pattl")
-        images = soup.select(".pcb img")
-
-        attachment_urls = [attachment['href'] for attachment in attachments]
-        image_urls = [image['file'] for image in images]
-
-        return content, attachment_urls, image_urls
+        return content
 
     except (requests.RequestException, ValueError) as e:
         print(f"发生错误: {e}")
-        return "", [], []
+        return ""
 
 def parse_relative_time(relative_time_str):
     if "分钟前" in relative_time_str:
@@ -81,20 +75,12 @@ async def check_and_send_message(post_link, post_title, post_poster, post_time):
         ) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
             pushed_posts.add(post_link)
 
-            post_content, attachment_urls, image_urls = await parse_post_content(post_link)
+            post_content = await parse_post_content(post_link)
 
             # 转换BBCode格式为Markdown格式
             post_content = convert_bbcode_to_markdown(post_content)
 
-            message = (
-                f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
-            )
-
-            if attachment_urls:
-                message += "\n附件：" + ", ".join(attachment_urls)
-
-            if image_urls:
-                message += "\n图片：" + ", ".join(image_urls)
+            message = f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
 
             await send_message(message)
 
