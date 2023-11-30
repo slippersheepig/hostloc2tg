@@ -7,10 +7,25 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 
-# ...（与现有导入相同）
+# 从.env文件中读取配置
+config = dotenv_values("/opt/h2tg/.env")
 
-# ...（与现有配置相同）
+# Telegram Bot 的 API Token
+BOT_TOKEN = config["BOT_TOKEN"]
+# Telegram Channel 的 ID
+CHANNEL_ID = config["CHANNEL_ID"]
+# 关键字过滤
+KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST").split(',') if config.get("KEYWORDS_WHITELIST") else []
+KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDS_BLACKLIST") else []
+# 发帖人屏蔽名单
+BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKED_POSTERS") else []
 
+# 上次检查的时间戳，初始设为当前时间 - 3分钟
+last_check = int(time.time()) - 180
+# 保存已推送过的新贴链接
+pushed_posts = set()
+
+# 发送消息到 Telegram Channel
 async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
     await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
