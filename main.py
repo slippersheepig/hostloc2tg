@@ -102,7 +102,7 @@ async def check_hostloc():
                     post_content = convert_bbcode_to_html(post_content)
 
                     # 构建消息文本，包括帖子标题和内容
-                    message = f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
+                    message = f"<b>{post_title}</b>\n{post_link}\n{post_content}"
 
                     await send_message(message)
 
