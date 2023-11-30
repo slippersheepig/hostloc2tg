@@ -6,7 +6,7 @@ import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from bbcode import formatter
+import bbcode
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -29,7 +29,7 @@ pushed_posts = set()
 # 发送消息到 Telegram Channel
 async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
-    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
+    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='HTML')
 
 # 解析帖子内容
 def parse_post_content(post_link):
@@ -58,11 +58,10 @@ def parse_relative_time(relative_time_str):
     else:
         return None
 
-def convert_bbcode_to_markdown(bbcode_content):
+def convert_bbcode_to_html(bbcode_content):
     # 使用bbcode库的Formatter进行转换
-    formatter_instance = formatter.Formatter()
-    markdown_content = formatter_instance.format(bbcode_content)
-    return markdown_content
+    html_content = bbcode.render_html(bbcode_content)
+    return html_content
 
 # 检查 hostloc.com 的新贴子
 async def check_hostloc():
@@ -99,8 +98,8 @@ async def check_hostloc():
                     # 解析帖子内容
                     post_content = parse_post_content(post_link)
 
-                    # 转换BBCode格式为Markdown格式
-                    post_content = convert_bbcode_to_markdown(post_content)
+                    # 转换BBCode格式为HTML格式
+                    post_content = convert_bbcode_to_html(post_content)
 
                     # 构建消息文本，包括帖子标题和内容
                     message = f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
