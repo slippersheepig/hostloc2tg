@@ -6,7 +6,7 @@ import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from bbcode import Parser, formatter
+from bbcode import formatter
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
