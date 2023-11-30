@@ -51,6 +51,13 @@ def parse_post_content(post_link):
         print(f"发生错误: {e}")
         return ""
 
+def parse_relative_time(relative_time_str):
+    if "分钟前" in relative_time_str:
+        minutes_ago = int(relative_time_str.split()[0])
+        return int(time.time()) - minutes_ago * 60
+    else:
+        return None
+
 # 检查 hostloc.com 的新贴子
 async def check_hostloc():
     global last_check
