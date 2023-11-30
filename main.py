@@ -17,10 +17,10 @@ BOT_TOKEN = config["BOT_TOKEN"]
 # Telegram Channel 的 ID
 CHANNEL_ID = config["CHANNEL_ID"]
 # 关键字过滤
-KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST", "").split(',')
-KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST", "").split(',')
+KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST").split(',') if config.get("KEYWORDS_WHITELIST") else []
+KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDS_BLACKLIST") else []
 # 发帖人屏蔽名单
-BLOCKED_POSTERS = config.get("BLOCKED_POSTERS", "").split(',')
+BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKED_POSTERS") else []
 
 # 上次检查的时间戳，初始设为当前时间 - 3分钟
 last_check = int(time.time()) - 180
@@ -87,7 +87,7 @@ async def check_and_send_message(post_link, post_title, post_poster, post_time):
             post_content = convert_bbcode_to_markdown(post_content)
 
             message = (
-                f"**{post_title}**\n[帖子链接]({post_link})\n{post_content}"
+                f"*{post_title}*\n[帖子链接]({post_link})\n{post_content}"
             )
 
             if attachment_urls:
