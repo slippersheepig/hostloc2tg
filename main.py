@@ -29,7 +29,8 @@ pushed_posts = set()
 # 发送消息到 Telegram Channel
 async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
-    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='HTML')
+    escaped_msg = html.escape(msg)  # 只对消息文本进行HTML转义
+    await bot.send_message(chat_id=CHANNEL_ID, text=escaped_msg, parse_mode='HTML')
 
 # 解析帖子内容
 def parse_post_content(post_link):
