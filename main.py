@@ -47,7 +47,7 @@ def parse_post_content(post_link):
             content = post_content_tag.decode_contents()
 
         # 转换BBCode到Markdown
-        content = bbcode.render_html(content, 'markdown')
+        content = convert_bbcode_to_markdown(content)
 
         return content
 
@@ -55,12 +55,12 @@ def parse_post_content(post_link):
         print(f"发生错误: {e}")
         return ""
 
-def parse_relative_time(relative_time_str):
-    if "分钟前" in relative_time_str:
-        minutes_ago = int(relative_time_str.split()[0])
-        return int(time.time()) - minutes_ago * 60
-    else:
-        return None
+# 自定义函数将BBCode转换为Markdown
+def convert_bbcode_to_markdown(bbcode_content):
+    # 这里可以根据实际情况添加更多的转换规则
+    # 这只是一个简单的例子
+    markdown_content = bbcode_content.replace('[b]', '**').replace('[/b]', '**')
+    return markdown_content
 
 # 检查 hostloc.com 的新贴子
 async def check_hostloc():
