@@ -1,5 +1,4 @@
 requests
-aiohttp
 schedule
 bbcode
 beautifulsoup4
