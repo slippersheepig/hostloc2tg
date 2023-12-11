@@ -43,7 +43,7 @@ def parse_post_content(post_link):
         # 提取发帖内容
         content = ""
         if post_content_tag:
-            content = post_content_tag.get_text(strip=True)
+            content = post_content_tag.get_text("\n", strip=True)
 
         return content
 
