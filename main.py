@@ -26,11 +26,14 @@ last_check = int(time.time()) - 180
 pushed_posts = set()
 
 # 发送消息到 Telegram Channel
-async def send_message(msg):
+async def send_message(msg, media_group=None):
     bot = telegram.Bot(token=BOT_TOKEN)
-    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
+    if media_group:
+        await bot.send_media_group(chat_id=CHANNEL_ID, media=media_group)
+    else:
+        await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
-# 解析帖子内容（仅含文字内容）
+# 解析帖子内容（含文字和多张图片）
 def parse_post_content(post_link):
     try:
         response = requests.get(post_link)
@@ -42,21 +45,18 @@ def parse_post_content(post_link):
 
         # 提取发帖内容
         content = ""
+        photo_urls = []
         if post_content_tag:
             content = post_content_tag.get_text("\n", strip=True)
+            # 提取所有图片链接
+            photo_tags = post_content_tag.find_all("img")
+            photo_urls = [tag["src"] for tag in photo_tags if "src" in tag.attrs]
 
-        return content
+        return content, photo_urls
 
     except (requests.RequestException, ValueError) as e:
         print(f"发生错误: {e}")
-        return ""
-
-def parse_relative_time(relative_time_str):
-    if "分钟前" in relative_time_str:
-        minutes_ago = int(relative_time_str.split()[0])
-        return int(time.time()) - minutes_ago * 60
-    else:
-        return None
+        return "", []
 
 # 检查 hostloc.com 的新贴子
 async def check_hostloc():
@@ -90,13 +90,16 @@ async def check_hostloc():
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     pushed_posts.add(post_link)
 
-                    # 解析帖子内容（仅含文字内容）
-                    post_content = parse_post_content(post_link)
+                    # 解析帖子内容（含文字和多张图片）
+                    post_content, photo_urls = parse_post_content(post_link)
 
-                    # 构建消息文本，包括帖子标题和内容
-                    message = f"*{post_title}*\n{post_link}\n{post_content}"
+                    # 构建消息文本和多媒体项目
+                    media_group = []
+                    for photo_url in photo_urls:
+                        media_group.append(telegram.InputMediaPhoto(media=photo_url))
 
-                    await send_message(message)
+                    # 发送消息到Telegram Channel
+                    await send_message(f"*{post_title}*\n{post_link}\n{post_content}", media_group)
 
         # 更新上次检查的时间为最后一个帖子的发布时间
         if post_links and post_time is not None:
