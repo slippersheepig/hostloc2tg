@@ -47,7 +47,7 @@ def parse_post_content(post_link):
             content = post_content_tag.get_text("\n", strip=True)
             # 提取所有图片链接
             photo_tags = post_content_tag.find_all("img")
-            photo_urls = [tag["src"] for tag in photo_tags if "src" in tag.attrs]
+            photo_urls = [tag["src"] if tag["src"].startswith("http") else f"https://hostloc.com{tag['src']}" for tag in photo_tags if "src" in tag.attrs]
 
         return content, photo_urls
 
@@ -106,7 +106,7 @@ async def check_hostloc():
 
                     # 发送整合后的消息到Telegram Channel
                     await send_message(message)
-
+            
         # 更新上次检查的时间为最后一个帖子的发布时间
         if post_links and post_time is not None:
             last_check = post_time
