@@ -2,4 +2,4 @@ requests
 schedule
 beautifulsoup4
 python-dotenv
-aiogram
+python-telegram-bot
