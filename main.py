@@ -26,12 +26,9 @@ last_check = int(time.time()) - 180
 pushed_posts = set()
 
 # 发送消息到 Telegram Channel
-async def send_message(msg, media_group=None):
+async def send_message(msg):
     bot = telegram.Bot(token=BOT_TOKEN)
-    if media_group:
-        await bot.send_media_group(chat_id=CHANNEL_ID, media=media_group)
-    else:
-        await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
+    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
 # 解析帖子内容（含文字和多张图片）
 def parse_post_content(post_link):
@@ -100,13 +97,15 @@ async def check_hostloc():
                     # 解析帖子内容（含文字和多张图片）
                     post_content, photo_urls = parse_post_content(post_link)
 
-                    # 构建消息文本和多媒体项目
-                    media_group = []
-                    for photo_url in photo_urls:
-                        media_group.append(telegram.InputMediaPhoto(media=photo_url))
+                    # 构建消息文本
+                    message = f"*{post_title}*\n{post_link}\n{post_content}"
 
-                    # 发送消息到Telegram Channel
-                    await send_message(f"*{post_title}*\n{post_link}\n{post_content}", media_group)
+                    # 添加图片链接到消息文本
+                    for photo_url in photo_urls:
+                        message += f"\n[![Image]({photo_url})]({photo_url})"
+
+                    # 发送整合后的消息到Telegram Channel
+                    await send_message(message)
 
         # 更新上次检查的时间为最后一个帖子的发布时间
         if post_links and post_time is not None:
