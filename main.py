@@ -4,7 +4,7 @@ import random
 import asyncio
 from aiogram import Bot, types
 from aiogram.types import InputMediaPhoto
-from aiogram.utils import exceptions
+from aiogram.types import exceptions as tg_exceptions
 from bs4 import BeautifulSoup
 from dotenv import dotenv_values
 
@@ -35,13 +35,13 @@ async def send_message(msg, photo_urls=[]):
         media = [InputMediaPhoto(media=photo_url) for photo_url in photo_urls]
         try:
             await bot.send_media_group(chat_id=CHANNEL_ID, media=media, caption=msg, parse_mode='Markdown')
-        except exceptions.TelegramAPIError as e:
+        except tg_exceptions.TelegramAPIError as e:
             print(f"发送消息到Telegram发生错误: {e}")
     else:
         # 否则发送文本消息
         try:
             await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
-        except exceptions.TelegramAPIError as e:
+        except tg_exceptions.TelegramAPIError as e:
             print(f"发送消息到Telegram发生错误: {e}")
 
 # 解析帖子内容（含文字和多张图片）
