@@ -2,11 +2,10 @@ import requests
 import time
 import random
 import asyncio
-from aiogram import Bot
-from aiogram.types import InputMediaPhoto
-from aiogram.exceptions import TelegramAPIError
-from bs4 import BeautifulSoup
+import telegram
 from dotenv import dotenv_values
+from bs4 import BeautifulSoup
+from datetime import datetime, timedelta
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -28,21 +27,15 @@ pushed_posts = set()
 
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[]):
-    bot = Bot(token=BOT_TOKEN)
-
+    bot = telegram.Bot(token=BOT_TOKEN)
+    
     # 如果有图片链接，发送带图片的消息
     if photo_urls:
-        media = [InputMediaPhoto(media=photo_url) for photo_url in photo_urls]
-        try:
-            await bot.send_media_group(chat_id=CHANNEL_ID, media=media, caption=msg, parse_mode='Markdown')
-        except TelegramAPIError as e:
-            print(f"发送消息到Telegram发生错误: {e}")
+        media = [telegram.InputMediaPhoto(media=photo_url) for photo_url in photo_urls]
+        await bot.send_media_group(chat_id=CHANNEL_ID, media=media, caption=msg, parse_mode='Markdown')
     else:
         # 否则发送文本消息
-        try:
-            await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
-        except TelegramAPIError as e:
-            print(f"发送消息到Telegram发生错误: {e}")
+        await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
 # 解析帖子内容（含文字和多张图片）
 def parse_post_content(post_link):
