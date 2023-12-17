@@ -1,4 +1,4 @@
-借助ChatGPT开发的hostloc新帖推送  
+借助ChatGPT开发的hostloc新帖图文推送  
 ⚠️注意：若hostloc开启了反爬，则代码失效
 ### 使用方法
 #### 一、新建`.env`文件，编辑以下内容并保存
@@ -24,4 +24,4 @@ services:
 ```
 #### 三、输入`docker-comopse up -d`即启动成功
 #### 四、效果图
-![image](https://github.com/slippersheepig/hostloc2tg/assets/58287293/7a9c060f-7077-4045-9485-5f8d9ab280aa)
+![image](https://github.com/slippersheepig/hostloc2tg/assets/58287293/18f6866b-856f-4ac6-b1ac-f5b211c120af)
