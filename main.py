@@ -5,6 +5,7 @@ import asyncio
 import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
 from datetime import datetime, timedelta
 
 # 从.env文件中读取配置
@@ -26,15 +27,20 @@ last_check = int(time.time()) - 180
 pushed_posts = set()
 
 # 发送消息到 Telegram Channel
-async def send_message(msg, photo_urls=[]):
+async def send_message(msg, photo_urls=[], attachment_urls=[]):
     bot = telegram.Bot(token=BOT_TOKEN)
     
     # 如果有图片链接，发送带图片的消息
     if photo_urls:
         media = [telegram.InputMediaPhoto(media=photo_url) for photo_url in photo_urls]
+        if attachment_urls:
+            # 如果有附件链接，将附件链接加入图片消息中
+            media.append(telegram.InputMediaDocument(media=attachment_urls[0]))
         await bot.send_media_group(chat_id=CHANNEL_ID, media=media, caption=msg, parse_mode='Markdown')
     else:
         # 否则发送文本消息
+        if attachment_urls:
+            msg += "\n附件链接:\n" + "\n".join(attachment_urls)
         await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
 # 解析帖子内容（含文字和多张图片）
@@ -50,17 +56,23 @@ def parse_post_content(post_link):
         # 提取发帖内容
         content = ""
         photo_urls = []
+        attachment_urls = []  # 新增附件链接列表
+
         if post_content_tag:
             content = post_content_tag.get_text("\n", strip=True)
             # 提取所有图片链接
             photo_tags = post_content_tag.find_all("img")
-            photo_urls = [tag["src"] if tag["src"].startswith("http") else f"https://hostloc.com/{tag['src']}" for tag in photo_tags if "src" in tag.attrs]
+            photo_urls = [tag["src"] if tag["src"].startswith("http") else urljoin(post_link, tag['src']) for tag in photo_tags if "src" in tag.attrs]
 
-        return content, photo_urls
+            # 提取所有附件链接
+            attachment_tags = post_content_tag.select("a[href*='attachment.php']")
+            attachment_urls = [urljoin(post_link, tag['href']) for tag in attachment_tags]
+
+        return content, photo_urls, attachment_urls
 
     except (requests.RequestException, ValueError) as e:
         print(f"发生错误: {e}")
-        return "", []
+        return "", [], []
 
 def parse_relative_time(relative_time_str):
     if "分钟前" in relative_time_str:
@@ -101,14 +113,14 @@ async def check_hostloc():
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     pushed_posts.add(post_link)
 
-                    # 解析帖子内容（含文字和多张图片）
-                    post_content, photo_urls = parse_post_content(post_link)
+                    # 解析帖子内容（含文字、多张图片和附件）
+                    post_content, photo_urls, attachment_urls = parse_post_content(post_link)
 
                     # 构建消息文本
                     message = f"*{post_title}*\n{post_link}\n{post_content}"
 
                     # 发送整合后的消息到Telegram Channel
-                    await send_message(message, photo_urls)
+                    await send_message(message, photo_urls, attachment_urls)
 
         # 更新上次检查的时间为最后一个帖子的发布时间
         if post_links and post_time is not None:
