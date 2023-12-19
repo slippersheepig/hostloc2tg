@@ -65,7 +65,7 @@ def parse_post_content(post_link):
             photo_urls = [tag["src"] if tag["src"].startswith("http") else urljoin(post_link, tag['src']) for tag in photo_tags if "src" in tag.attrs]
 
             # 提取所有附件链接
-            attachment_tags = post_content_tag.select("a[href*='attachment.php']")
+            attachment_tags = post_content_tag.select("a[href*='forum.php?mod=attachment']")
             attachment_urls = [urljoin(post_link, tag['href']) for tag in attachment_tags]
 
         return content, photo_urls, attachment_urls
