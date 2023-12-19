@@ -21,6 +21,9 @@ KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("
 # 发帖人屏蔽名单
 BLOCKED_POSTERS = config.get("BLOCKED_POSTERS").split(',') if config.get("BLOCKED_POSTERS") else []
 
+# 创建 Telegram Bot 实例
+bot = telegram.Bot(token=BOT_TOKEN)
+
 # 上次检查的时间戳，初始设为当前时间 - 3分钟
 last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
@@ -28,8 +31,6 @@ pushed_posts = set()
 
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
-    bot = telegram.Bot(token=BOT_TOKEN)
-    
     # 如果有图片链接，发送带图片的消息
     if photo_urls:
         media = [telegram.InputMediaPhoto(media=photo_url) for photo_url in photo_urls]
