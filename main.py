@@ -31,15 +31,25 @@ pushed_posts = set()
 
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
-    # 如果有图片链接，发送带图片的消息
     if photo_urls:
-        media = [telegram.InputMediaPhoto(media=photo_url) for photo_url in photo_urls]
+        media = []
+        for photo_url in photo_urls:
+            # 下载图片并重新上传到Telegram
+            response = requests.get(photo_url)
+            if response.status_code == 200:
+                with open("temp_image.jpg", "wb") as f:
+                    f.write(response.content)
+                with open("temp_image.jpg", "rb") as f:
+                    media.append(telegram.InputMediaPhoto(media=f))
+                os.remove("temp_image.jpg")
+            else:
+                media.append(telegram.InputMediaPhoto(media=photo_url))  # 使用原始URL作为备份
+
         if attachment_urls:
-            # 如果有附件链接，将附件链接加入图片消息中
             media.append(telegram.InputMediaDocument(media=attachment_urls[0]))
+
         await bot.send_media_group(chat_id=CHANNEL_ID, media=media, caption=msg, parse_mode='Markdown')
     else:
-        # 否则发送文本消息
         if attachment_urls:
             msg += "\n附件链接:\n" + "\n".join(attachment_urls)
         await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
