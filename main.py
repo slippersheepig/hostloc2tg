@@ -1,4 +1,3 @@
-import os
 import requests
 import time
 import random
@@ -7,7 +6,7 @@ import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-from datetime import datetime, timedelta
+import os
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -32,11 +31,12 @@ pushed_posts = set()
 
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
+    # 如果有图片链接，发送带图片的消息
     if photo_urls:
         media = []
         for photo_url in photo_urls:
             # 下载图片并重新上传到Telegram
-            response = requests.get(photo_url)
+            response = requests.get(photo_url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
             if response.status_code == 200:
                 with open("temp_image.jpg", "wb") as f:
                     f.write(response.content)
