@@ -7,6 +7,7 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import os
+from PIL import Image
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -38,16 +39,28 @@ def is_valid_image(url):
             if response.status_code == 200:
                 with open("temp_image.jpg", "wb") as f:
                     f.write(response.content)
-                with open("temp_image.jpg", "rb") as f:
-                    from PIL import Image
-                    image = Image.open(f)
-                    width, height = image.size
+                with Image.open("temp_image.jpg") as img:
+                    width, height = img.size
                 os.remove("temp_image.jpg")
                 return width > 1 and height > 1  # 确保图片尺寸大于1x1像素
         return False
     except Exception as e:
         print(f"检查图片链接时发生错误: {e}")
         return False
+
+# 下载图片并返回文件路径
+def download_image(photo_url):
+    try:
+        response = requests.get(photo_url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        if response.status_code == 200:
+            file_path = "temp_image.jpg"
+            with open(file_path, "wb") as f:
+                f.write(response.content)
+            return file_path
+        return None
+    except Exception as e:
+        print(f"下载图片时发生错误: {e}")
+        return None
 
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
@@ -58,14 +71,11 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     if valid_photo_urls:
         media = []
         for photo_url in valid_photo_urls:
-            # 下载图片并重新上传到Telegram
-            response = requests.get(photo_url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
-            if response.status_code == 200:
-                with open("temp_image.jpg", "wb") as f:
-                    f.write(response.content)
-                with open("temp_image.jpg", "rb") as f:
+            file_path = download_image(photo_url)
+            if file_path:
+                with open(file_path, "rb") as f:
                     media.append(telegram.InputMediaPhoto(media=f))
-                os.remove("temp_image.jpg")
+                os.remove(file_path)
             else:
                 media.append(telegram.InputMediaPhoto(media=photo_url))  # 使用原始URL作为备份
 
