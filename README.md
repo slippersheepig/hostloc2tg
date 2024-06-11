@@ -17,7 +17,7 @@ KEYWORDS_BLACKLIST=出,收
 ```bash
 services:
   h2tg:
-    image: sheepgreen/h2tg
+    image: sheepgreen/h2tg #若使用github镜像，则改为ghcr.io/slippersheepig/h2tg
     container_name: h2tg
     volumes:
       - ./.env:/opt/h2tg/.env
