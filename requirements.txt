@@ -2,4 +2,3 @@ requests
 beautifulsoup4
 python-dotenv
 python-telegram-bot
-pillow
