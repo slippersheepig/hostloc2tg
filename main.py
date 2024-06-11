@@ -29,12 +29,23 @@ last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
 pushed_posts = set()
 
+# 检查图片链接是否有效
+def is_valid_image(url):
+    try:
+        response = requests.head(url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        return response.status_code == 200 and "image" in response.headers["Content-Type"]
+    except Exception:
+        return False
+
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
-    # 如果有图片链接，发送带图片的消息
-    if photo_urls:
+    # 过滤无效图片链接
+    valid_photo_urls = [url for url in photo_urls if is_valid_image(url)]
+
+    # 如果有有效的图片链接，发送带图片的消息
+    if valid_photo_urls:
         media = []
-        for photo_url in photo_urls:
+        for photo_url in valid_photo_urls:
             # 下载图片并重新上传到Telegram
             response = requests.get(photo_url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
             if response.status_code == 200:
