@@ -7,6 +7,7 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import os
+import re
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -54,6 +55,42 @@ def download_image(photo_url):
     except Exception as e:
         print(f"下载图片时发生错误: {e}")
         return None
+
+# 清理文本内容，确保其不会破坏Markdown或HTML格式
+def clean_text(text):
+    # 替换Markdown特殊字符
+    text = text.replace('_', '\\_')
+    text = text.replace('*', '\\*')
+    text = text.replace('[', '\\[')
+    text = text.replace(']', '\\]')
+    text = text.replace('(', '\\(')
+    text = text.replace(')', '\\)')
+    text = text.replace('~', '\\~')
+    text = text.replace('`', '\\`')
+    text = text.replace('>', '\\>')
+    text = text.replace('#', '\\#')
+    text = text.replace('+', '\\+')
+    text = text.replace('-', '\\-')
+    text = text.replace('=', '\\=')
+    text = text.replace('|', '\\|')
+    text = text.replace('{', '\\{')
+    text = text.replace('}', '\\}')
+    text = text.replace('.', '\\.')
+    text = text.replace('!', '\\!')
+    return text
+
+# 将UBB代码转换为Markdown格式
+def ubb_to_markdown(text):
+    # 替换常见的UBB标签为Markdown格式
+    text = re.sub(r'\[b\](.*?)\[/b\]', r'**\1**', text, flags=re.DOTALL)
+    text = re.sub(r'\[i\](.*?)\[/i\]', r'*\1*', text, flags=re.DOTALL)
+    text = re.sub(r'\[u\](.*?)\[/u\]', r'_\1_', text, flags=re.DOTALL)
+    text = re.sub(r'\[url\](.*?)\[/url\]', r'\1', text, flags=re.DOTALL)
+    text = re.sub(r'\[url=(.*?)\](.*?)\[/url\]', r'[\2](\1)', text, flags=re.DOTALL)
+    text = re.sub(r'\[img\](.*?)\[/img\]', r'!\[\](\1)', text, flags=re.DOTALL)
+    text = re.sub(r'\[quote\](.*?)\[/quote\]', r'> \1', text, flags=re.DOTALL)
+    text = re.sub(r'\[code\](.*?)\[/code\]', r'```\1```', text, flags=re.DOTALL)
+    return text
 
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
@@ -106,6 +143,9 @@ def parse_post_content(post_link):
             attachment_tags = post_content_tag.select("a[href*='forum.php?mod=attachment']")
             attachment_urls = [urljoin(post_link, tag['href']) for tag in attachment_tags]
 
+        # 转换UBB代码为Markdown格式
+        content = ubb_to_markdown(content)
+
         return content, photo_urls, attachment_urls
 
     except (requests.RequestException, ValueError) as e:
@@ -149,31 +189,27 @@ async def check_hostloc():
             # 并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
             if post_poster not in BLOCKED_POSTERS and post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
-                    pushed_posts.add(post_link)
-
-                    # 解析帖子内容（含文字、多张图片和附件）
-                    post_content, photo_urls, attachment_urls = parse_post_content(post_link)
-
-                    # 构建消息文本
-                    message = f"*{post_title}*\n{post_link}\n{post_content}"
-
-                    # 发送整合后的消息到Telegram Channel
+                    content, photo_urls, attachment_urls = parse_post_content(post_link)
+                    message = f"*标题:* {post_title}\n*链接:* [点击这里]({post_link})\n*发帖人:* {post_poster}\n\n{clean_text(content)}"
                     await send_message(message, photo_urls, attachment_urls)
+                    pushed_posts.add(post_link)
+                    await asyncio.sleep(random.randint(1, 3))  # 发送每条消息后随机等待1-3秒
 
-        # 更新上次检查的时间为最后一个帖子的发布时间
-        if post_links and post_time is not None:
-            last_check = post_time
+        # 更新上次检查的时间戳
+        last_check = int(time.time())
 
-    except (requests.RequestException, ValueError, KeyError) as e:
+    except (requests.RequestException, ValueError) as e:
         print(f"发生错误: {e}")
 
-# 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
+# 定时任务调度
 async def run_scheduler():
-    # 每隔1-2分钟执行一次检查
     while True:
-        await asyncio.sleep(random.uniform(60, 120))
-        asyncio.create_task(check_hostloc())
+        await check_hostloc()
+        await asyncio.sleep(180)  # 每3分钟检查一次
 
-# 启动定时任务
-if __name__ == "__main__":
+# 入口函数
+def main():
     asyncio.run(run_scheduler())
+
+if __name__ == "__main__":
+    main()
