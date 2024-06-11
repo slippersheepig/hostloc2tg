@@ -190,10 +190,10 @@ async def check_hostloc():
             if post_poster not in BLOCKED_POSTERS and post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     content, photo_urls, attachment_urls = parse_post_content(post_link)
-                    message = f"*标题:* {post_title}\n*链接:* [点击这里]({post_link})\n*发帖人:* {post_poster}\n\n{clean_text(content)}"
+                    message = f"=*{post_title}*\n{post_link}\n*发帖人：*{post_poster}\n{clean_text(content)}"
                     await send_message(message, photo_urls, attachment_urls)
                     pushed_posts.add(post_link)
-                    await asyncio.sleep(random.randint(1, 3))  # 发送每条消息后随机等待1-3秒
+                    await asyncio.sleep(random.uniform(1, 3))  # 发送每条消息后随机等待1-3秒
 
         # 更新上次检查的时间戳
         last_check = int(time.time())
@@ -205,7 +205,7 @@ async def check_hostloc():
 async def run_scheduler():
     while True:
         await check_hostloc()
-        await asyncio.sleep(180)  # 每3分钟检查一次
+        await asyncio.sleep(random.uniform(60, 120))  # 每1至2分钟检查一次
 
 # 入口函数
 def main():
