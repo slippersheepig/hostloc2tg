@@ -179,7 +179,6 @@ async def check_hostloc():
         for link in reversed(post_links):
             post_link = "https://www.hostloc.com/" + link['href']
             post_title = link.string
-            post_poster = link.parent.find_previous('a').string
 
             # 获取帖子发布时间
             post_time_str = link.parent.find_next('em').text
@@ -190,7 +189,7 @@ async def check_hostloc():
             if post_poster not in BLOCKED_POSTERS and post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     content, photo_urls, attachment_urls = parse_post_content(post_link)
-                    message = f"=*{post_title}*\n{post_link}\n*发帖人：*{post_poster}\n{clean_text(content)}"
+                    message = f"=*{post_title}*\n{post_link}\n{clean_text(content)}"
                     await send_message(message, photo_urls, attachment_urls)
                     pushed_posts.add(post_link)
                     await asyncio.sleep(random.uniform(1, 3))  # 发送每条消息后随机等待1-3秒
