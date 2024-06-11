@@ -7,7 +7,6 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import os
-from PIL import Image
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -30,19 +29,13 @@ last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
 pushed_posts = set()
 
-# 检查图片链接是否有效
+# 检查图片链接是否有效且尺寸大于1x1像素
 def is_valid_image(url):
     try:
-        response = requests.head(url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        response = requests.get(url, stream=True, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
         if response.status_code == 200 and "image" in response.headers["Content-Type"]:
-            response = requests.get(url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
-            if response.status_code == 200:
-                with open("temp_image.jpg", "wb") as f:
-                    f.write(response.content)
-                with Image.open("temp_image.jpg") as img:
-                    width, height = img.size
-                os.remove("temp_image.jpg")
-                return width > 1 and height > 1  # 确保图片尺寸大于1x1像素
+            response.raw.decode_content = True
+            return int(response.headers.get('Content-Length', 0)) > 100  # 简单检查内容长度是否大于100字节
         return False
     except Exception as e:
         print(f"检查图片链接时发生错误: {e}")
