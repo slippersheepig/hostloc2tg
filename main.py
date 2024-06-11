@@ -184,7 +184,7 @@ async def check_hostloc():
 
             # 如果没有发布人屏蔽，且没有指定关键字或帖子链接不在已推送过的新贴集合中，
             # 并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
-            ifpost_link not in pushed_posts and post_time is not None and post_time > last_check:
+            if post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     content, photo_urls, attachment_urls = parse_post_content(post_link)
                     message = f"=*{post_title}*\n{post_link}\n{clean_text(content)}"
