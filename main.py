@@ -33,8 +33,20 @@ pushed_posts = set()
 def is_valid_image(url):
     try:
         response = requests.head(url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
-        return response.status_code == 200 and "image" in response.headers["Content-Type"]
-    except Exception:
+        if response.status_code == 200 and "image" in response.headers["Content-Type"]:
+            response = requests.get(url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+            if response.status_code == 200:
+                with open("temp_image.jpg", "wb") as f:
+                    f.write(response.content)
+                with open("temp_image.jpg", "rb") as f:
+                    from PIL import Image
+                    image = Image.open(f)
+                    width, height = image.size
+                os.remove("temp_image.jpg")
+                return width > 1 and height > 1  # 确保图片尺寸大于1x1像素
+        return False
+    except Exception as e:
+        print(f"检查图片链接时发生错误: {e}")
         return False
 
 # 发送消息到 Telegram Channel
