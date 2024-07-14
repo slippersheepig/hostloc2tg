@@ -6,4 +6,4 @@ updates:
     directory: "/"
     commit-message:
       prefix: 'build(deps):'
-    package-ecosystem: "python"
+    package-ecosystem: "pip"
