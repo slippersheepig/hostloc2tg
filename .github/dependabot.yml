@@ -3,8 +3,7 @@ updates:
   - schedule:
       interval: daily
       time: "10:00"
-    directory:
-      - "/"
+    directory: "/"
     commit-message:
       prefix: 'build(deps):'
-    package-ecosystem: "github"
+    package-ecosystem: "python"
