@@ -1,4 +1,4 @@
-requests
-beautifulsoup4
-python-dotenv
-python-telegram-bot
+requests==2.32.3
+beautifulsoup4==4.12.3
+python-dotenv==1.0.1
+python-telegram-bot==21.4
