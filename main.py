@@ -76,8 +76,13 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     # 发送文本消息和附件
     if attachment_urls:
         msg += "\n附件链接:\n" + "\n".join(attachment_urls)
-    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
+    # 检查消息长度并截断
+    max_length = 4096
+    if len(msg) > max_length:
+        msg = msg[:max_length - 3] + "..."  # 截断并添加省略号
+
+    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
 # 解析帖子内容（含文字和多张图片）
 def parse_post_content(post_link):
