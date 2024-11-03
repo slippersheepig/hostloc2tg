@@ -1,4 +1,5 @@
 import requests
+import ssl
 import time
 import random
 import asyncio
@@ -39,7 +40,7 @@ bot = telegram.Bot(token=BOT_TOKEN)
 
 # 创建会话并设置适配器为 TLS 1.2
 session = requests.Session()
-session.mount('https://', TLSAdapter(ssl_version='TLSv1_2'))
+session.mount('https://', TLSAdapter(ssl_version=ssl.TLSVersion.TLSv1_2))
 
 # 上次检查的时间戳，初始设为当前时间 - 3分钟
 last_check = int(time.time()) - 180
