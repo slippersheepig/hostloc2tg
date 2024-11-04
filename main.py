@@ -1,5 +1,4 @@
 import requests
-import ssl
 import time
 import random
 import asyncio
@@ -8,21 +7,6 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import os
-from requests.adapters import HTTPAdapter
-from urllib3.util.ssl_ import create_urllib3_context
-
-# 创建自定义的适配器来使用指定的 TLS 版本
-class TLSAdapter(HTTPAdapter):
-    def __init__(self, ssl_version=None, **kwargs):
-        self.ssl_version = ssl_version
-        super().__init__(**kwargs)
-
-    def init_poolmanager(self, *args, **kwargs):
-        context = create_urllib3_context()
-        if self.ssl_version is not None:
-            context.minimum_version = self.ssl_version
-        kwargs['ssl_context'] = context
-        super().init_poolmanager(*args, **kwargs)
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -38,10 +22,6 @@ KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("
 # 创建 Telegram Bot 实例
 bot = telegram.Bot(token=BOT_TOKEN)
 
-# 创建会话并设置适配器为 TLS 1.2
-session = requests.Session()
-session.mount('https://', TLSAdapter(ssl_version=ssl.TLSVersion.TLSv1_2))
-
 # 上次检查的时间戳，初始设为当前时间 - 3分钟
 last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
@@ -50,7 +30,7 @@ pushed_posts = set()
 # 检查图片链接是否有效且尺寸大于1x1像素
 def is_valid_image(url):
     try:
-        response = session.get(url, stream=True, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        response = requests.get(url, stream=True, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
         if response.status_code == 200 and "image" in response.headers["Content-Type"]:
             response.raw.decode_content = True
             return int(response.headers.get('Content-Length', 0)) > 100  # 简单检查内容长度是否大于100字节
@@ -62,7 +42,7 @@ def is_valid_image(url):
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
-        response = session.get(photo_url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        response = requests.get(photo_url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
         if response.status_code == 200:
             file_path = "temp_image.jpg"
             with open(file_path, "wb") as f:
@@ -107,7 +87,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
 # 解析帖子内容（含文字和多张图片）
 def parse_post_content(post_link):
     try:
-        response = session.get(post_link)
+        response = requests.get(post_link)
         response.raise_for_status()  # 检查请求是否成功
         html_content = response.text
 
@@ -150,7 +130,7 @@ async def check_hostloc():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = session.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
+        response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
         response.raise_for_status()  # 检查请求是否成功
         html_content = response.text
 
