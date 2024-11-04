@@ -2,3 +2,4 @@ requests==2.32.3
 beautifulsoup4==4.12.3
 python-dotenv==1.0.1
 python-telegram-bot==21.6
+pip-system-certs==4.0
