@@ -30,7 +30,7 @@ pushed_posts = set()
 # 检查图片链接是否有效且尺寸大于1x1像素
 def is_valid_image(url):
     try:
-        response = requests.get(url, stream=True, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        response = requests.get(url, stream=True, headers={"Referer": "https://hostloc.com", "User-Agent": "Mozilla/5.0"})
         if response.status_code == 200 and "image" in response.headers["Content-Type"]:
             response.raw.decode_content = True
             return int(response.headers.get('Content-Length', 0)) > 100  # 简单检查内容长度是否大于100字节
@@ -42,7 +42,7 @@ def is_valid_image(url):
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
-        response = requests.get(photo_url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        response = requests.get(photo_url, headers={"Referer": "https://hostloc.com", "User-Agent": "Mozilla/5.0"})
         if response.status_code == 200:
             file_path = "temp_image.jpg"
             with open(file_path, "wb") as f:
@@ -130,7 +130,7 @@ async def check_hostloc():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
         }
-        response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
+        response = requests.get("https://hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
         response.raise_for_status()  # 检查请求是否成功
         html_content = response.text
 
@@ -140,7 +140,7 @@ async def check_hostloc():
 
         # 遍历最新的帖子链接
         for link in reversed(post_links):
-            post_link = "https://www.hostloc.com/" + link['href']
+            post_link = "https://hostloc.com/" + link['href']
             post_title = link.string
 
             # 获取帖子发布时间
