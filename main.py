@@ -123,7 +123,7 @@ async def check_hostloc():
     try:
         # 发送请求，获取最新的帖子链接和标题
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
         }
         response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
         response.raise_for_status()  # 检查请求是否成功
