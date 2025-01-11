@@ -37,6 +37,8 @@ headers = {
     'Accept-Encoding': 'gzip, deflate, br',
     'Accept-Language': 'en-GB,en;q=0.9,en-US;q=0.8,zh;q=0.7',
     'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1',
+    'Cache-Control': 'max-age=0'
 }
 
 # 检查图片链接是否有效且尺寸大于1x1像素
