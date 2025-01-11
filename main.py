@@ -27,10 +27,22 @@ last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
 pushed_posts = set()
 
+# 创建一个requests.Session()，以保持会话
+session = requests.Session()
+
+# 模拟浏览器的请求头
+headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Accept-Language': 'en-GB,en;q=0.9,en-US;q=0.8,zh;q=0.7',
+    'Connection': 'keep-alive',
+}
+
 # 检查图片链接是否有效且尺寸大于1x1像素
 def is_valid_image(url):
     try:
-        response = requests.get(url, stream=True, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        response = session.get(url, stream=True, headers=headers)
         if response.status_code == 200 and "image" in response.headers["Content-Type"]:
             response.raw.decode_content = True
             return int(response.headers.get('Content-Length', 0)) > 100  # 简单检查内容长度是否大于100字节
@@ -42,7 +54,7 @@ def is_valid_image(url):
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
-        response = requests.get(photo_url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        response = session.get(photo_url, headers=headers)
         if response.status_code == 200:
             file_path = "temp_image.jpg"
             with open(file_path, "wb") as f:
@@ -82,7 +94,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
 # 解析帖子内容（含文字和多张图片）
 def parse_post_content(post_link):
     try:
-        response = requests.get(post_link)
+        response = session.get(post_link, headers=headers)
         response.raise_for_status()  # 检查请求是否成功
         html_content = response.text
 
@@ -122,10 +134,7 @@ async def check_hostloc():
     global last_check
     try:
         # 发送请求，获取最新的帖子链接和标题
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
-        }
-        response = requests.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
+        response = session.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
         response.raise_for_status()  # 检查请求是否成功
         html_content = response.text
 
@@ -142,7 +151,7 @@ async def check_hostloc():
             post_time_str = link.parent.find_next('em').text
             post_time = parse_relative_time(post_time_str)
 
-            # 如果没有指定关键字或帖子链接不在已推送过的新贴集合中，
+            # 如果没有指定关键字或帖子链接不在已推送过的新贴集合中， 
             # 并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
             if post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
