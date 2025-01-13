@@ -1,4 +1,3 @@
-import requests
 import time
 import random
 import asyncio
@@ -7,6 +6,8 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import os
+from curl_cffi import requests  # 使用curl_cffi替换requests
+from curl_cffi import Curl  # 引入Curl类以支持TLS指纹绕过
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -27,7 +28,7 @@ last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
 pushed_posts = set()
 
-# 创建一个requests.Session()，以保持会话
+# 创建一个curl_cffi.Session()，以保持会话
 session = requests.Session()
 
 # 模拟浏览器的请求头
@@ -41,13 +42,33 @@ headers = {
     'Cache-Control': 'max-age=0'
 }
 
+# 配置curl_cffi以绕过TLS指纹识别
+def configure_curl_for_tls():
+    curl = Curl()
+    curl.setopt(Curl.OPT_USERAGENT, headers['User-Agent'])
+    curl.setopt(Curl.OPT_FOLLOWLOCATION, True)  # 支持重定向
+    curl.setopt(Curl.OPT_TIMEOUT, 30)  # 设置超时
+    return curl
+
+# 使用curl_cffi绕过TLS指纹识别的请求
+def make_request_with_curl(url, headers=None):
+    curl = configure_curl_for_tls()
+    curl.setopt(Curl.OPT_URL, url)
+    
+    # 设置请求头
+    if headers:
+        curl.setopt(Curl.OPT_HTTPHEADER, [f"{key}: {value}" for key, value in headers.items()])
+    
+    # 执行请求并获取响应
+    response = curl.perform_rb()
+    return response.decode('utf-8')
+
 # 检查图片链接是否有效且尺寸大于1x1像素
 def is_valid_image(url):
     try:
-        response = session.get(url, stream=True, headers=headers)
-        if response.status_code == 200 and "image" in response.headers["Content-Type"]:
-            response.raw.decode_content = True
-            return int(response.headers.get('Content-Length', 0)) > 100  # 简单检查内容长度是否大于100字节
+        response = make_request_with_curl(url, headers)
+        if "image" in response:
+            return len(response) > 100  # 简单检查内容长度是否大于100字节
         return False
     except Exception as e:
         print(f"检查图片链接时发生错误: {e}")
@@ -56,13 +77,11 @@ def is_valid_image(url):
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
-        response = session.get(photo_url, headers=headers)
-        if response.status_code == 200:
-            file_path = "temp_image.jpg"
-            with open(file_path, "wb") as f:
-                f.write(response.content)
-            return file_path
-        return None
+        response = make_request_with_curl(photo_url, headers)
+        file_path = "temp_image.jpg"
+        with open(file_path, "wb") as f:
+            f.write(response.encode())
+        return file_path
     except Exception as e:
         print(f"下载图片时发生错误: {e}")
         return None
@@ -92,15 +111,11 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
         msg += "\n附件链接:\n" + "\n".join(attachment_urls)
     await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
-
 # 解析帖子内容（含文字和多张图片）
 def parse_post_content(post_link):
     try:
-        response = session.get(post_link, headers=headers)
-        response.raise_for_status()  # 检查请求是否成功
-        html_content = response.text
-
-        soup = BeautifulSoup(html_content, 'html.parser')
+        response = make_request_with_curl(post_link, headers)
+        soup = BeautifulSoup(response, 'html.parser')
         post_content_tag = soup.select_one(".t_fsz")
 
         # 提取发帖内容
@@ -136,12 +151,10 @@ async def check_hostloc():
     global last_check
     try:
         # 发送请求，获取最新的帖子链接和标题
-        response = session.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers)
-        response.raise_for_status()  # 检查请求是否成功
-        html_content = response.text
-
+        response = make_request_with_curl("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers)
+        
         # 解析HTML内容，提取最新的帖子链接和标题
-        soup = BeautifulSoup(html_content, 'html.parser')
+        soup = BeautifulSoup(response, 'html.parser')
         post_links = soup.select(".xst")
 
         # 遍历最新的帖子链接
