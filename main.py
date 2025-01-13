@@ -7,6 +7,8 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import os
 import curl_cffi
+from curl_cffi import requests  # 使用curl_cffi替换requests
+from curl_cffi import Curl
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
