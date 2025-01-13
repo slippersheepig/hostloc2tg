@@ -169,7 +169,7 @@ async def check_hostloc():
 
         last_check = int(time.time())
 
-    except (requests_cffi.RequestException, Exception) as e:
+    except Exception as e:
         print(f"发生错误: {e}")
 
 # 每隔5秒检查一次
