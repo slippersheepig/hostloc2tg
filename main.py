@@ -109,7 +109,7 @@ def parse_post_content(post_link):
         html_content = response.text
 
         soup = BeautifulSoup(html_content, 'html.parser')
-        post_content_tag = soup.select_one(".t_fsz")
+        post_content_tag = soup.select_one(".t_f")
 
         # 提取发帖内容
         content = ""
