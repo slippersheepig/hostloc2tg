@@ -30,8 +30,5 @@ jobs:
         platforms: |
           linux/amd64
           linux/arm64
-          linux/arm/v7
-          linux/s390x
-          linux/ppc64le
         push: true
         tags: ghcr.io/${{ github.repository_owner }}/h2tg:latest
