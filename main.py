@@ -6,8 +6,7 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import os
-from curl_cffi import requests  # 使用curl_cffi替换requests
-from curl_cffi import Curl  # 引入Curl类以支持TLS指纹绕过
+from curl_cffi
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -44,24 +43,22 @@ headers = {
 
 # 配置curl_cffi以绕过TLS指纹识别
 def configure_curl_for_tls():
-    curl = Curl()
-    curl.setopt(Curl.OPT_USERAGENT, headers['User-Agent'])
-    curl.setopt(Curl.OPT_FOLLOWLOCATION, True)  # 支持重定向
-    curl.setopt(Curl.OPT_TIMEOUT, 30)  # 设置超时
+    curl = curl_cffi.Curl()
+    headers = ['User-Agent: Mozilla/5.0']
+    curl.setopt(curl.CURLOPT_HTTPHEADER, headers)
     return curl
 
 # 使用curl_cffi绕过TLS指纹识别的请求
-def make_request_with_curl(url, headers=None):
-    curl = configure_curl_for_tls()
-    curl.setopt(Curl.OPT_URL, url)
-    
-    # 设置请求头
-    if headers:
-        curl.setopt(Curl.OPT_HTTPHEADER, [f"{key}: {value}" for key, value in headers.items()])
-    
-    # 执行请求并获取响应
-    response = curl.perform_rb()
-    return response.decode('utf-8')
+def make_request_with_curl(url, headers):
+    try:
+        curl = configure_curl_for_tls()
+        curl.setopt(curl.CURLOPT_URL, url)
+        curl.setopt(curl.CURLOPT_WRITEFUNCTION, lambda x: None)  # 处理返回数据
+        curl.perform()
+        return curl
+    except curl_cffi.error.CurlError as e:
+        print(f"发生Curl错误: {e}")
+        return None
 
 # 检查图片链接是否有效且尺寸大于1x1像素
 def is_valid_image(url):
@@ -152,6 +149,8 @@ async def check_hostloc():
     try:
         # 发送请求，获取最新的帖子链接和标题
         response = make_request_with_curl("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers)
+        if response is None:
+            raise ValueError("请求失败")
         
         # 解析HTML内容，提取最新的帖子链接和标题
         soup = BeautifulSoup(response, 'html.parser')
@@ -185,7 +184,7 @@ async def check_hostloc():
         if post_links and post_time is not None:
             last_check = post_time
 
-    except (requests.RequestException, ValueError, KeyError) as e:
+    except (curl_cffi.error.CurlError, ValueError, KeyError) as e:
         print(f"发生错误: {e}")
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
