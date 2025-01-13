@@ -1,4 +1,4 @@
-import requests_cffi
+from curl_cffi import requests as requests_cffi
 import time
 import random
 import asyncio
