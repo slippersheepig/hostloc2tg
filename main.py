@@ -106,7 +106,7 @@ def parse_post_content(post_link):
 
         return content, photo_urls, attachment_urls
 
-    except (requests_cffi.RequestException, ValueError) as e:
+    except (curl_cffi.curl.CurlError, Exception) as e:
         print(f"发生错误: {e}")
         return "", [], []
 
@@ -125,7 +125,7 @@ async def check_hostloc():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
         }
-        response = requests_cffi.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers, impersonate="chrome110")  # 使用 curl_cffi 请求
+        response = requests_cffi.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers, impersonate="chrome110", tls_version='TLSv1_2')  # 使用 curl_cffi 请求
         response.raise_for_status()  # 检查请求是否成功
         html_content = response.text
 
