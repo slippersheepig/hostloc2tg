@@ -27,10 +27,32 @@ last_check = int(time.time()) - 180
 # 保存已推送过的新贴链接
 pushed_posts = set()
 
+# 模拟浏览器的请求头
+headers = {
+    'Host': 'hostloc.com',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+    'Accept-Language': 'zh-CN,zh;q=0.9',
+    'Accept-Encoding': 'gzip, deflate, br',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'DNT': '1',
+    'Pragma': 'no-cache',
+    'Priority': 'u=0, i',
+    'Sec-Ch-Ua': '"Chromium";v="130", "Microsoft Edge";v="130", "Not?A_Brand";v="99"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"Windows"',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate', 
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Upgrade-Insecure-Requests': '1'
+}
+
 # 检查图片链接是否有效且尺寸大于1x1像素
 def is_valid_image(url):
     try:
-        response = requests_cffi.get(url, stream=True, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        response = requests_cffi.get(url, stream=True, headers=headers)
         if response.status_code == 200 and "image" in response.headers["Content-Type"]:
             response.raw.decode_content = True
             return int(response.headers.get('Content-Length', 0)) > 100  # 简单检查内容长度是否大于100字节
@@ -42,7 +64,7 @@ def is_valid_image(url):
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
-        response = requests_cffi.get(photo_url, headers={"Referer": "https://www.hostloc.com", "User-Agent": "Mozilla/5.0"})
+        response = requests_cffi.get(photo_url, headers=headers)
         if response.status_code == 200:
             file_path = "temp_image.jpg"
             with open(file_path, "wb") as f:
@@ -122,26 +144,6 @@ async def check_hostloc():
     global last_check
     try:
         # 发送请求，获取最新的帖子链接和标题
-        headers = {
-            'Host': 'hostloc.com',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Accept-Language': 'zh-CN,zh;q=0.9',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Cache-Control': 'no-cache',
-            'Connection': 'keep-alive',
-            'DNT': '1',
-            'Pragma': 'no-cache',
-            'Priority': 'u=0, i',
-            'Sec-Ch-Ua': '"Chromium";v="130", "Microsoft Edge";v="130", "Not?A_Brand";v="99"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate', 
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-            'Upgrade-Insecure-Requests': '1'
-        }
         response = requests_cffi.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers, impersonate="chrome110")  # 使用 curl_cffi 请求
         response.raise_for_status()  # 检查请求是否成功
         html_content = response.text
