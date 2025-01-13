@@ -159,15 +159,24 @@ async def check_hostloc():
             post_time_str = link.parent.find_next('em').text
             post_time = parse_relative_time(post_time_str)
 
-            # 如果没有指定关键字或帖子链接不在已推送过的新贴集合中，发送到Telegram Channel并将链接加入已推送集合
+            # 如果没有指定关键字或帖子链接不在已推送过的新贴集合中，
+            # 并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
             if post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
-                    content, photo_urls, attachment_urls = parse_post_content(post_link)
-                    msg = f"新帖子: [{post_title}]({post_link})\n\n{content}"
-                    await send_message(msg, photo_urls, attachment_urls)
                     pushed_posts.add(post_link)
 
-        last_check = int(time.time())
+                    # 解析帖子内容（含文字、多张图片和附件）
+                    post_content, photo_urls, attachment_urls = parse_post_content(post_link)
+
+                    # 构建消息文本
+                    message = f"*{post_title}*\n{post_link}\n{post_content}"
+
+                    # 发送整合后的消息到Telegram Channel
+                    await send_message(message, photo_urls, attachment_urls)
+
+        # 更新上次检查的时间为最后一个帖子的发布时间
+        if post_links and post_time is not None:
+            last_check = post_time
 
     except Exception as e:
         print(f"发生错误: {e}")
