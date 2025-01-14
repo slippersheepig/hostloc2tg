@@ -52,7 +52,7 @@ headers = {
 # 检查图片链接是否有效且尺寸大于1x1像素
 def is_valid_image(url):
     try:
-        response = requests_cffi.get(url, stream=True, headers=headers)
+        response = requests_cffi.get(url, stream=True, headers=headers, impersonate="chrome124")
         if response.status_code == 200 and "image" in response.headers["Content-Type"]:
             response.raw.decode_content = True
             return int(response.headers.get('Content-Length', 0)) > 100  # 简单检查内容长度是否大于100字节
@@ -64,7 +64,7 @@ def is_valid_image(url):
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
-        response = requests_cffi.get(photo_url, headers=headers)
+        response = requests_cffi.get(photo_url, headers=headers, impersonate="chrome124")
         if response.status_code == 200:
             file_path = "temp_image.jpg"
             with open(file_path, "wb") as f:
@@ -104,7 +104,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
 # 解析帖子内容（含文字和多张图片）
 def parse_post_content(post_link):
     try:
-        response = requests_cffi.get(post_link, headers=headers, impersonate="chrome131")
+        response = requests_cffi.get(post_link, headers=headers, impersonate="chrome124")
         response.raise_for_status()  # 检查请求是否成功
         html_content = response.text
 
