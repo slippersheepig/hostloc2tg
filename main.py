@@ -49,18 +49,6 @@ headers = {
     'Upgrade-Insecure-Requests': '1'
 }
 
-# 检查图片链接是否有效且尺寸大于1x1像素
-def is_valid_image(url):
-    try:
-        response = requests_cffi.get(url, stream=True, headers=headers, impersonate="chrome124")
-        if response.status_code == 200 and "image" in response.headers["Content-Type"]:
-            response.raw.decode_content = True
-            return int(response.headers.get('Content-Length', 0)) > 100  # 简单检查内容长度是否大于100字节
-        return False
-    except Exception as e:
-        print(f"检查图片链接时发生错误: {e}")
-        return False
-
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
@@ -77,21 +65,18 @@ def download_image(photo_url):
 
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
-    # 过滤无效图片链接
-    valid_photo_urls = [url for url in photo_urls if is_valid_image(url)]
-
-    # 如果有有效的图片链接，发送带图片的消息
-    if valid_photo_urls:
-        media = []
-        for photo_url in valid_photo_urls:
-            file_path = download_image(photo_url)
-            if file_path:
-                with open(file_path, "rb") as f:
-                    media.append(telegram.InputMediaPhoto(media=f))
-                os.remove(file_path)
-            else:
-                media.append(telegram.InputMediaPhoto(media=photo_url))  # 使用原始URL作为备份
-        
+    media = []
+    # 发送带图片的消息
+    for photo_url in photo_urls:
+        file_path = download_image(photo_url)
+        if file_path:
+            with open(file_path, "rb") as f:
+                media.append(telegram.InputMediaPhoto(media=f))
+            os.remove(file_path)
+        else:
+            media.append(telegram.InputMediaPhoto(media=photo_url))  # 使用原始URL作为备份
+    
+    if media:
         # 发送图片
         await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
     
@@ -101,7 +86,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
 
-# 解析帖子内容（含文字和多张图片）
+# 解析帖子内容
 def parse_post_content(post_link):
     try:
         response = requests_cffi.get(post_link, headers=headers, impersonate="chrome124")  # 使用 curl_cffi 请求
