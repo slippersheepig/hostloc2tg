@@ -144,7 +144,7 @@ async def check_hostloc():
     global last_check
     try:
         # 发送请求，获取最新的帖子链接和标题
-        response = requests_cffi.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers, impersonate="chrome110")  # 使用 curl_cffi 请求
+        response = requests_cffi.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers, impersonate="chrome131")  # 使用 curl_cffi 请求
         response.raise_for_status()  # 检查请求是否成功
         html_content = response.text
 
