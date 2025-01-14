@@ -54,7 +54,7 @@ headers = {
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
-        # 检查图片链接的域名是否在忽略列表中
+        # 检查图片链接的域名是否在忽略列表中（支持模糊匹配）
         parsed_url = urlparse(photo_url)
         domain = parsed_url.netloc
         if any(ignored_domain in domain for ignored_domain in IGNORED_DOMAINS):
