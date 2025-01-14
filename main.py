@@ -19,7 +19,7 @@ CHANNEL_ID = config["CHANNEL_ID"]
 KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST").split(',') if config.get("KEYWORDS_WHITELIST") else []
 KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDS_BLACKLIST") else []
 # 忽略的图床域名
-IGNORED_DOMAINS = config.get("IGNORED_DOMAINS", "").split(',') if config.get("IGNORED_DOMAINS") else []
+IGNORED_DOMAINS = config.get("IGNORED_DOMAINS").split(',') if config.get("IGNORED_DOMAINS") else []
 
 # 创建 Telegram Bot 实例
 bot = telegram.Bot(token=BOT_TOKEN)
