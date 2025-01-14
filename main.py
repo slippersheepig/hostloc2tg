@@ -5,7 +5,7 @@ import asyncio
 import telegram
 from dotenv import dotenv_values
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 import os
 
 # 从.env文件中读取配置
@@ -18,6 +18,8 @@ CHANNEL_ID = config["CHANNEL_ID"]
 # 关键字过滤
 KEYWORDS_WHITELIST = config.get("KEYWORDS_WHITELIST").split(',') if config.get("KEYWORDS_WHITELIST") else []
 KEYWORDS_BLACKLIST = config.get("KEYWORDS_BLACKLIST").split(',') if config.get("KEYWORDS_BLACKLIST") else []
+# 忽略的图床域名
+IGNORED_DOMAINS = config.get("IGNORED_DOMAINS", "").split(',') if config.get("IGNORED_DOMAINS") else []
 
 # 创建 Telegram Bot 实例
 bot = telegram.Bot(token=BOT_TOKEN)
@@ -52,6 +54,13 @@ headers = {
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
+        # 检查图片链接的域名是否在忽略列表中
+        parsed_url = urlparse(photo_url)
+        domain = parsed_url.netloc
+        if any(ignored_domain in domain for ignored_domain in IGNORED_DOMAINS):
+            print(f"忽略图床域名: {domain}")
+            return None
+        
         response = requests_cffi.get(photo_url, headers=headers, impersonate="chrome124")
         if response.status_code == 200:
             file_path = "temp_image.jpg"
@@ -146,7 +155,7 @@ async def check_hostloc():
             post_time_str = link.parent.find_next('em').text
             post_time = parse_relative_time(post_time_str)
 
-            # 如果没有指定关键字或帖子链接不在已推送过的新贴集合中，
+            # 如果没有指定关键字或帖子链接不在已推送过的新贴集合中， 
             # 并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
             if post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
