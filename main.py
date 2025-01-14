@@ -104,41 +104,32 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
 # 解析帖子内容（含文字和多张图片）
 def parse_post_content(post_link):
     try:
-        response = requests_cffi.get(post_link, headers=headers, impersonate="chrome124")
+        response = requests_cffi.get(post_link, headers=headers, impersonate="chrome124")  # 使用 curl_cffi 请求
         response.raise_for_status()  # 检查请求是否成功
         html_content = response.text
 
         soup = BeautifulSoup(html_content, 'html.parser')
-
-        # 定位到帖子内容的标签
-        post_content_tag = soup.select_one(".t_f")  # 检查实际类名是否仍是 '.t_f'
-
-        # 如果未找到内容标签，打印HTML调试
-        if not post_content_tag:
-            print(f"未找到帖子内容，HTML内容如下：\n{html_content}")
-            return "", [], []
+        post_content_tag = soup.find("td", {"class": "t_f", "id": lambda x: x and x.startswith("postmessage_")})
 
         # 提取发帖内容
-        content = post_content_tag.get_text("\n", strip=True)
+        content = ""
+        photo_urls = []
+        attachment_urls = []  # 新增附件链接列表
 
-        # 提取图片链接
-        photo_tags = post_content_tag.find_all("img")
-        photo_urls = [
-            urljoin(post_link, tag["src"]) for tag in photo_tags
-            if tag.get("src") and tag["src"].startswith("http")
-        ]
+        if post_content_tag:
+            content = post_content_tag.get_text("\n", strip=True)
+            # 提取所有图片链接
+            photo_tags = post_content_tag.find_all("img")
+            photo_urls = [tag["src"] if tag["src"].startswith("http") else urljoin(post_link, tag['src']) for tag in photo_tags if "src" in tag.attrs]
 
-        # 提取附件链接
-        attachment_tags = post_content_tag.select("a[href*='forum.php?mod=attachment']")
-        attachment_urls = [
-            urljoin(post_link, tag["href"]) for tag in attachment_tags
-            if tag.get("href")
-        ]
+            # 提取所有附件链接
+            attachment_tags = post_content_tag.select("a[href*='forum.php?mod=attachment']")
+            attachment_urls = [urljoin(post_link, tag['href']) for tag in attachment_tags]
 
         return content, photo_urls, attachment_urls
 
     except Exception as e:
-        print(f"解析帖子内容时发生错误: {e}")
+        print(f"发生错误: {e}")
         return "", [], []
 
 def parse_relative_time(relative_time_str):
