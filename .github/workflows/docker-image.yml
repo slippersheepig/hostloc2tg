@@ -1,9 +1,10 @@
 name: ci
 
 on:
-  push:
-    branches:
-      - "main"
+  workflow_run:
+    workflows: ["Auto Merge Dependabot PRs"]
+    types:
+      - completed
 
 jobs:
   docker:
