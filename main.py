@@ -102,10 +102,15 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     # 如果有附件，或者未满足单图文字条件，发送文本消息和附件
     if attachment_urls:
         msg += "\n附件链接：\n" + "\n".join(attachment_urls)
-    
+
+    post_title = msg.split("\n")[0]  # 获取标题部分
+    bold_title = f"<b>{post_title}</b>"  # 使用HTML标签加粗标题
+    msg = msg.replace(post_title, bold_title, 1)  # 替换标题为加粗后的部分
+
     # 如果未发送文本，确保文本消息仍被发送
     if not text_with_single_image or len(photo_urls) > 1:
-        await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
+        # 使用HTML来格式化消息
+        await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='HTML')
 
 # 解析帖子内容
 def parse_post_content(post_link):
@@ -165,7 +170,7 @@ async def check_hostloc():
 
                     post_content, photo_urls, attachment_urls = parse_post_content(post_link)
 
-                    message = f"*{post_title}*\n{post_link}\n{post_content}"
+                    message = f"{post_title}\n{post_link}\n{post_content}"
 
                     await send_message(message, photo_urls, attachment_urls)
 
