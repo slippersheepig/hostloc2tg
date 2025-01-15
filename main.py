@@ -54,7 +54,6 @@ headers = {
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
-        # 检查图片链接的域名是否在忽略列表中（支持模糊匹配）
         parsed_url = urlparse(photo_url)
         domain = parsed_url.netloc
         if any(ignored_domain in domain for ignored_domain in IGNORED_DOMAINS):
@@ -75,7 +74,6 @@ def download_image(photo_url):
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
     media = []
-    # 发送带图片的消息
     for photo_url in photo_urls:
         file_path = download_image(photo_url)
         if file_path:
@@ -83,40 +81,38 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
                 media.append(telegram.InputMediaPhoto(media=f))
             os.remove(file_path)
         else:
-            media.append(telegram.InputMediaPhoto(media=photo_url))  # 使用原始URL作为备份
-    
-    if media:
-        # 发送图片
-        await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
-    
-    # 发送文本消息和附件
-    if attachment_urls:
-        msg += "\n附件链接:\n" + "\n".join(attachment_urls)
-    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
+            media.append(telegram.InputMediaPhoto(media=photo_url))
 
+    if media:
+        if len(msg) <= 1024:
+            media[0].caption = msg
+            await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
+        else:
+            await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
+            await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
+    else:
+        if attachment_urls:
+            msg += "\n附件链接：\n" + "\n".join(attachment_urls)
+        await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
 # 解析帖子内容
 def parse_post_content(post_link):
     try:
-        response = requests_cffi.get(post_link, headers=headers, impersonate="chrome124")  # 使用 curl_cffi 请求
-        response.raise_for_status()  # 检查请求是否成功
+        response = requests_cffi.get(post_link, headers=headers, impersonate="chrome124")
+        response.raise_for_status()
         html_content = response.text
 
         soup = BeautifulSoup(html_content, 'html.parser')
         post_content_tag = soup.find("td", {"class": "t_f", "id": lambda x: x and x.startswith("postmessage_")})
 
-        # 提取发帖内容
         content = ""
         photo_urls = []
-        attachment_urls = []  # 新增附件链接列表
+        attachment_urls = []
 
         if post_content_tag:
             content = post_content_tag.get_text("\n", strip=True)
-            # 提取所有图片链接
             photo_tags = post_content_tag.find_all("img")
             photo_urls = [tag["src"] if tag["src"].startswith("http") else urljoin(post_link, tag['src']) for tag in photo_tags if "src" in tag.attrs]
-
-            # 提取所有附件链接
             attachment_tags = post_content_tag.select("a[href*='forum.php?mod=attachment']")
             attachment_urls = [urljoin(post_link, tag['href']) for tag in attachment_tags]
 
@@ -137,53 +133,36 @@ def parse_relative_time(relative_time_str):
 async def check_hostloc():
     global last_check
     try:
-        # 发送请求，获取最新的帖子链接和标题
-        response = requests_cffi.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers, impersonate="chrome124")  # 使用 curl_cffi 请求
-        response.raise_for_status()  # 检查请求是否成功
+        response = requests_cffi.get("https://www.hostloc.com/forum.php?mod=guide&view=newthread", headers=headers, impersonate="chrome124")
+        response.raise_for_status()
         html_content = response.text
 
-        # 解析HTML内容，提取最新的帖子链接和标题
         soup = BeautifulSoup(html_content, 'html.parser')
         post_links = soup.select(".xst")
 
-        # 遍历最新的帖子链接
         for link in reversed(post_links):
             post_link = "https://www.hostloc.com/" + link['href']
             post_title = link.string
-
-            # 获取帖子发布时间
             post_time_str = link.parent.find_next('em').text
             post_time = parse_relative_time(post_time_str)
 
-            # 如果没有指定关键字或帖子链接不在已推送过的新贴集合中， 
-            # 并且发布时间在上次检查时间之后，发送到Telegram Channel并将链接加入已推送集合
             if post_link not in pushed_posts and post_time is not None and post_time > last_check:
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     pushed_posts.add(post_link)
-
-                    # 解析帖子内容（含文字、多张图片和附件）
                     post_content, photo_urls, attachment_urls = parse_post_content(post_link)
-
-                    # 构建消息文本
                     message = f"*{post_title}*\n{post_link}\n{post_content}"
-
-                    # 发送整合后的消息到Telegram Channel
                     await send_message(message, photo_urls, attachment_urls)
 
-        # 更新上次检查的时间为最后一个帖子的发布时间
         if post_links and post_time is not None:
             last_check = post_time
 
     except Exception as e:
         print(f"发生错误: {e}")
 
-# 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
 async def run_scheduler():
-    # 每隔1-2分钟执行一次检查
     while True:
         await asyncio.sleep(random.uniform(60, 120))
         asyncio.create_task(check_hostloc())
 
-# 启动定时任务
 if __name__ == "__main__":
     asyncio.run(run_scheduler())
