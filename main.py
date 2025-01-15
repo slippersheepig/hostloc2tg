@@ -83,16 +83,20 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
         else:
             media.append(telegram.InputMediaPhoto(media=photo_url))
 
+    # 附加附件链接
+    if attachment_urls:
+        msg += "\n附件链接:\n" + "\n".join(attachment_urls)
+
     if media:
+        # 当消息长度超过 1024 字符时，拆分发送
         if len(msg) <= 1024:
             media[0].caption = msg
             await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
         else:
+            media[0].caption = msg[:1024]  # 截取前1024字符作为图片说明
             await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
-            await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
+            await bot.send_message(chat_id=CHANNEL_ID, text=msg[1024:], parse_mode='Markdown')
     else:
-        if attachment_urls:
-            msg += "\n附件链接：\n" + "\n".join(attachment_urls)
         await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
 # 解析帖子内容
