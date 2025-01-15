@@ -74,30 +74,37 @@ def download_image(photo_url):
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
     media = []
+    # 判断是否为单张图片且字符数不超过1024
     text_with_single_image = len(photo_urls) == 1 and not attachment_urls and len(msg) <= 1024
 
+    # 发送带图片的消息
     for i, photo_url in enumerate(photo_urls):
         file_path = download_image(photo_url)
         if file_path:
             with open(file_path, "rb") as f:
+                # 如果是单张图片且满足条件，将文字作为caption
                 if text_with_single_image:
                     media.append(telegram.InputMediaPhoto(media=f, caption=msg))
                 else:
                     media.append(telegram.InputMediaPhoto(media=f))
             os.remove(file_path)
         else:
+            # 使用URL发送图片作为备份
             if text_with_single_image:
                 media.append(telegram.InputMediaPhoto(media=photo_url, caption=msg))
             else:
                 media.append(telegram.InputMediaPhoto(media=photo_url))
     
     if media:
+        # 如果是多图，单独发送图片组
         await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
 
+    # 如果有附件，或者未满足单图文字条件，发送文本消息和附件
     if attachment_urls:
         msg += "\n附件链接：\n" + "\n".join(attachment_urls)
-        await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
-    elif not text_with_single_image:
+    
+    # 如果未发送文本，确保文本消息仍被发送
+    if not text_with_single_image or len(photo_urls) > 1:
         await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
 # 解析帖子内容
