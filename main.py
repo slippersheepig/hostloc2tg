@@ -82,14 +82,14 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
         if file_path:
             with open(file_path, "rb") as f:
                 if text_with_single_image and i == 0:  # 如果是单图且满足条件，将文字作为caption
-                    caption = f"<b>{msg.split('\n')[0]}</b>\n{msg[1:]}"
+                    caption = f"<b>{msg.split('\n')[0]}</b>\n{msg[len(msg.split('\n')[0]):]}"
                     media.append(telegram.InputMediaPhoto(media=f, caption=caption, parse_mode='HTML'))
                 else:
                     media.append(telegram.InputMediaPhoto(media=f))
             os.remove(file_path)
         else:
             if text_with_single_image and i == 0:
-                caption = f"<b>{msg.split('\n')[0]}</b>\n{msg[1:]}"
+                caption = f"<b>{msg.split('\n')[0]}</b>\n{msg[len(msg.split('\n')[0]):]}"
                 media.append(telegram.InputMediaPhoto(media=photo_url, caption=caption, parse_mode='HTML'))
             else:
                 media.append(telegram.InputMediaPhoto(media=photo_url))
@@ -99,7 +99,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
         await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
 
     # 发送文字内容（如果未作为图片的 caption 或存在附件）
-    if len(photo_urls) == 0 or len(photo_urls) > 1:  # 处理多图时的正文推送
+    if len(photo_urls) == 0 or len(photo_urls) > 1:
         post_title = msg.split("\n")[0]
         bold_title = f"*{post_title}*"
         msg = msg.replace(post_title, bold_title, 1)
