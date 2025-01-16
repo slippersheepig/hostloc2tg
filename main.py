@@ -77,39 +77,36 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     # 判断是否为单张图片且字符数不超过1024
     text_with_single_image = len(photo_urls) == 1 and not attachment_urls and len(msg) <= 1024
 
-    # 发送带图片的消息
+    # 发送图片组
     for i, photo_url in enumerate(photo_urls):
         file_path = download_image(photo_url)
         if file_path:
             with open(file_path, "rb") as f:
-                # 如果是单张图片且满足条件，将文字作为caption
-                if text_with_single_image:
+                if text_with_single_image and i == 0:  # 如果是单图且满足条件，将文字作为caption
                     media.append(telegram.InputMediaPhoto(media=f, caption=msg))
                 else:
                     media.append(telegram.InputMediaPhoto(media=f))
             os.remove(file_path)
         else:
-            # 使用URL发送图片作为备份
-            if text_with_single_image:
+            if text_with_single_image and i == 0:
                 media.append(telegram.InputMediaPhoto(media=photo_url, caption=msg))
             else:
                 media.append(telegram.InputMediaPhoto(media=photo_url))
     
+    # 如果有多张图片，发送媒体组
     if media:
-        # 如果是多图，单独发送图片组
         await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
 
-    # 如果有附件，或者未满足单图文字条件，发送文本消息和附件
-    if attachment_urls:
-        msg += "\n附件链接：\n" + "\n".join(attachment_urls)
-
-    post_title = msg.split("\n")[0]  # 获取标题部分
-    bold_title = f"<b>{post_title}</b>"  # 使用HTML标签加粗标题
-    msg = msg.replace(post_title, bold_title, 1)  # 替换标题为加粗后的部分
-
-    # 如果未发送文本，确保文本消息仍被发送
+    # 发送文字内容（如果未作为图片的 caption 或存在附件）
     if not text_with_single_image or len(photo_urls) > 1:
-        # 使用HTML来格式化消息
+        # 格式化标题为加粗
+        post_title = msg.split("\n")[0]
+        bold_title = f"<b>{post_title}</b>"
+        msg = msg.replace(post_title, bold_title, 1)
+
+        if attachment_urls:
+            msg += "\n附件链接：\n" + "\n".join(attachment_urls)
+
         await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='HTML')
 
 # 解析帖子内容
