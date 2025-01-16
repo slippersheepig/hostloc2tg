@@ -74,7 +74,6 @@ def download_image(photo_url):
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
     media = []
-    # 判断是否为单张图片且字符数不超过1024
     text_with_single_image = len(photo_urls) == 1 and not attachment_urls and len(msg) <= 1024
 
     # 发送图片组
@@ -92,14 +91,13 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
                 media.append(telegram.InputMediaPhoto(media=photo_url, caption=msg))
             else:
                 media.append(telegram.InputMediaPhoto(media=photo_url))
-    
+
     # 如果有多张图片，发送媒体组
     if media:
         await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
 
     # 发送文字内容（如果未作为图片的 caption 或存在附件）
-    if not text_with_single_image or len(photo_urls) > 1:
-        # 格式化标题为加粗
+    if len(photo_urls) == 0 or len(photo_urls) > 1:  # 处理多图时的正文推送
         post_title = msg.split("\n")[0]
         bold_title = f"<b>{post_title}</b>"
         msg = msg.replace(post_title, bold_title, 1)
