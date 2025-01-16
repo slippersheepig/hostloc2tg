@@ -83,14 +83,14 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
             with open(file_path, "rb") as f:
                 if text_with_single_image and i == 0:  # 如果是单图且满足条件，将文字作为caption
                     caption = f"<b>{msg.split('\n')[0]}</b>\n{msg[1:]}"
-                    media.append(telegram.InputMediaPhoto(media=f, caption=caption))
+                    media.append(telegram.InputMediaPhoto(media=f, caption=caption, parse_mode='HTML'))
                 else:
                     media.append(telegram.InputMediaPhoto(media=f))
             os.remove(file_path)
         else:
             if text_with_single_image and i == 0:
                 caption = f"<b>{msg.split('\n')[0]}</b>\n{msg[1:]}"
-                media.append(telegram.InputMediaPhoto(media=photo_url, caption=caption))
+                media.append(telegram.InputMediaPhoto(media=photo_url, caption=caption, parse_mode='HTML'))
             else:
                 media.append(telegram.InputMediaPhoto(media=photo_url))
 
