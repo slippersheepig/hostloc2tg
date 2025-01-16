@@ -82,13 +82,15 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
         if file_path:
             with open(file_path, "rb") as f:
                 if text_with_single_image and i == 0:  # 如果是单图且满足条件，将文字作为caption
-                    media.append(telegram.InputMediaPhoto(media=f, caption=msg))
+                    caption = f"<b>{msg.split('\n')[0]}</b>\n{msg[1:]}"
+                    media.append(telegram.InputMediaPhoto(media=f, caption=caption))
                 else:
                     media.append(telegram.InputMediaPhoto(media=f))
             os.remove(file_path)
         else:
             if text_with_single_image and i == 0:
-                media.append(telegram.InputMediaPhoto(media=photo_url, caption=msg))
+                caption = f"<b>{msg.split('\n')[0]}</b>\n{msg[1:]}"
+                media.append(telegram.InputMediaPhoto(media=photo_url, caption=caption))
             else:
                 media.append(telegram.InputMediaPhoto(media=photo_url))
 
@@ -99,13 +101,13 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     # 发送文字内容（如果未作为图片的 caption 或存在附件）
     if len(photo_urls) == 0 or len(photo_urls) > 1:  # 处理多图时的正文推送
         post_title = msg.split("\n")[0]
-        bold_title = f"<b>{post_title}</b>"
+        bold_title = f"*{post_title}*"
         msg = msg.replace(post_title, bold_title, 1)
 
         if attachment_urls:
             msg += "\n附件链接：\n" + "\n".join(attachment_urls)
 
-        await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='HTML')
+        await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
 # 解析帖子内容
 def parse_post_content(post_link):
