@@ -7,6 +7,8 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import os
+from PIL import Image
+from io import BytesIO
 
 # 从 .env 文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -51,6 +53,16 @@ headers = {
     'Upgrade-Insecure-Requests': '1'
 }
 
+# 检查图片是否有效（忽略1x1的图片）
+def is_valid_image(image_data):
+    try:
+        image = Image.open(BytesIO(image_data))
+        width, height = image.size
+        return width > 1 and height > 1  # 忽略1x1的图片
+    except Exception as e:
+        print(f"检查图片有效性时发生错误： {e}")
+        return False
+
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
@@ -61,7 +73,7 @@ def download_image(photo_url):
             return None
         
         response = requests_cffi.get(photo_url, headers=headers, impersonate="chrome124")
-        if response.status_code == 200:
+        if response.status_code == 200 and is_valid_image(response.content):
             file_path = "temp_image.jpg"
             with open(file_path, "wb") as f:
                 f.write(response.content)
