@@ -7,8 +7,6 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import os
-from PIL import Image
-from io import BytesIO
 
 # 从 .env 文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -53,12 +51,23 @@ headers = {
     'Upgrade-Insecure-Requests': '1'
 }
 
-# 检查图片是否有效（忽略1x1的图片）
-def is_valid_image(image_data):
+# 检查图片是否有效（忽略1x1的图片，通过文件大小或响应头）
+def is_valid_image(image_url):
     try:
-        image = Image.open(BytesIO(image_data))
-        width, height = image.size
-        return width > 1 and height > 1  # 忽略1x1的图片
+        response = requests_cffi.get(image_url, headers=headers, stream=True, impersonate="chrome124")
+        if response.status_code == 200:
+            content_type = response.headers.get('Content-Type', '').lower()
+            if 'image' in content_type:  # 确保是图片类型
+                # 检查文件大小（例如小于10KB的图片可以认为是无效的）
+                content_length = response.headers.get('Content-Length', None)
+                if content_length and int(content_length) > 1024:  # 需要至少 1KB 的图片
+                    # 如果可能，检查图片是否过小
+                    # 使用response.content获取图片的前几字节进行分析
+                    image_data = response.content[:200]
+                    if len(image_data) < 100:  # 假设有效图片数据最小值为100字节
+                        return False
+                    return True
+        return False
     except Exception as e:
         print(f"检查图片有效性时发生错误： {e}")
         return False
@@ -72,12 +81,13 @@ def download_image(photo_url):
             print(f"忽略图床域名： {domain}")
             return None
         
-        response = requests_cffi.get(photo_url, headers=headers, impersonate="chrome124")
-        if response.status_code == 200 and is_valid_image(response.content):
-            file_path = "temp_image.jpg"
-            with open(file_path, "wb") as f:
-                f.write(response.content)
-            return file_path
+        if is_valid_image(photo_url):
+            response = requests_cffi.get(photo_url, headers=headers, stream=True, impersonate="chrome124")
+            if response.status_code == 200:
+                file_path = "temp_image.jpg"
+                with open(file_path, "wb") as f:
+                    f.write(response.content)
+                return file_path
         return None
     except Exception as e:
         print(f"下载图片时发生错误： {e}")
