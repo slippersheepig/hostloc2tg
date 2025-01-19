@@ -51,21 +51,16 @@ headers = {
     'Upgrade-Insecure-Requests': '1'
 }
 
-# 检查图片是否有效（忽略1x1的图片，通过文件大小或响应头）
+# 检查图片是否有效（忽略小于1KB的图片）
 def is_valid_image(image_url):
     try:
         response = requests_cffi.get(image_url, headers=headers, stream=True, impersonate="chrome124")
         if response.status_code == 200:
             content_type = response.headers.get('Content-Type', '').lower()
             if 'image' in content_type:  # 确保是图片类型
-                # 检查文件大小（例如小于10KB的图片可以认为是无效的）
+                # 获取图片的Content-Length（文件大小），如果小于1KB则认为是无效图片
                 content_length = response.headers.get('Content-Length', None)
-                if content_length and int(content_length) > 1024:  # 需要至少 1KB 的图片
-                    # 如果可能，检查图片是否过小
-                    # 使用response.content获取图片的前几字节进行分析
-                    image_data = response.content[:200]
-                    if len(image_data) < 100:  # 假设有效图片数据最小值为100字节
-                        return False
+                if content_length and int(content_length) > 1024:  # 至少需要 1KB 的图片
                     return True
         return False
     except Exception as e:
