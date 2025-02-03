@@ -143,25 +143,37 @@ def parse_post_content(post_link):
         html_content = response.text
 
         soup = BeautifulSoup(html_content, 'html.parser')
+
+        # 获取帖子标题
+        post_title_tag = soup.find("h1", {"class": "ts"})
+        post_title = post_title_tag.get_text().strip() if post_title_tag else "无标题"
+
+        # 获取帖子正文内容
         post_content_tag = soup.find("td", {"class": "t_f", "id": lambda x: x and x.startswith("postmessage_")})
-
-        content = ""
+        content = post_content_tag.get_text("\n", strip=True) if post_content_tag else "无内容"
+        
+        # 获取图片链接
         photo_urls = []
+        photo_tags = post_content_tag.find_all("img") if post_content_tag else []
+        for tag in photo_tags:
+            photo_url = tag.get("src")
+            if photo_url and photo_url.startswith("http"):
+                photo_urls.append(photo_url)
+            elif photo_url:
+                photo_urls.append(urljoin(post_link, photo_url))
+
+        # 获取附件链接
         attachment_urls = []
+        attachment_tags = post_content_tag.select("a[href*='forum.php?mod=attachment']") if post_content_tag else []
+        for tag in attachment_tags:
+            attachment_url = urljoin(post_link, tag["href"])
+            attachment_urls.append(attachment_url)
 
-        if post_content_tag:
-            content = post_content_tag.get_text("\n", strip=True)
-            photo_tags = post_content_tag.find_all("img")
-            photo_urls = [tag["src"] if tag["src"].startswith("http") else urljoin(post_link, tag['src']) for tag in photo_tags if "src" in tag.attrs]
-
-            attachment_tags = post_content_tag.select("a[href*='forum.php?mod=attachment']")
-            attachment_urls = [urljoin(post_link, tag['href']) for tag in attachment_tags]
-
-        return content, photo_urls, attachment_urls
+        return post_title, content, photo_urls, attachment_urls
 
     except Exception as e:
         print(f"发生错误： {e}")
-        return "", [], []
+        return "", "", [], []
 
 def parse_relative_time(relative_time_str):
     if "分钟前" in relative_time_str:
@@ -191,10 +203,8 @@ async def check_hostloc():
                 if (not KEYWORDS_WHITELIST or any(keyword in post_title for keyword in KEYWORDS_WHITELIST)) and not any(keyword in post_title for keyword in KEYWORDS_BLACKLIST):
                     pushed_posts.add(post_link)
 
-                    post_content, photo_urls, attachment_urls = parse_post_content(post_link)
-
+                    post_title, post_content, photo_urls, attachment_urls = parse_post_content(post_link)
                     message = f"{post_title}\n{post_link}\n{post_content}"
-
                     await send_message(message, photo_urls, attachment_urls)
 
         if post_links and post_time is not None:
