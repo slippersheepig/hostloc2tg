@@ -51,22 +51,6 @@ headers = {
     'Upgrade-Insecure-Requests': '1'
 }
 
-# 检查图片是否有效（忽略小于1KB的图片）
-def is_valid_image(image_url):
-    try:
-        response = requests_cffi.get(image_url, headers=headers, stream=True, impersonate="chrome124")
-        if response.status_code == 200:
-            content_type = response.headers.get('Content-Type', '').lower()
-            if 'image' in content_type:  # 确保是图片类型
-                # 获取图片的Content-Length（文件大小），如果小于1KB则认为是无效图片
-                content_length = response.headers.get('Content-Length', None)
-                if content_length and int(content_length) > 1024:  # 至少需要 1KB 的图片
-                    return True
-        return False
-    except Exception as e:
-        print(f"检查图片有效性时发生错误： {e}")
-        return False
-
 # 下载图片并返回文件路径
 def download_image(photo_url):
     try:
@@ -76,13 +60,12 @@ def download_image(photo_url):
             print(f"忽略图床域名： {domain}")
             return None
         
-        if is_valid_image(photo_url):
-            response = requests_cffi.get(photo_url, headers=headers, stream=True, impersonate="chrome124")
-            if response.status_code == 200:
-                file_path = "temp_image.jpg"
-                with open(file_path, "wb") as f:
-                    f.write(response.content)
-                return file_path
+        response = requests_cffi.get(photo_url, headers=headers, impersonate="chrome124")
+        if response.status_code == 200:
+            file_path = "temp_image.jpg"
+            with open(file_path, "wb") as f:
+                f.write(response.content)
+            return file_path
         return None
     except Exception as e:
         print(f"下载图片时发生错误： {e}")
