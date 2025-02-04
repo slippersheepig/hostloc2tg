@@ -64,13 +64,18 @@ def is_valid_image(url):
         return False
 
 # 下载图片并返回文件路径
-def download_image(photo_url):
+def download_image(photo_url, post_link):
     try:
+        # 判断是否是图床图片
         parsed_url = urlparse(photo_url)
         domain = parsed_url.netloc
         if any(ignored_domain in domain for ignored_domain in IGNORED_DOMAINS):
             print(f"忽略图床域名： {domain}")
             return None
+        
+        # 如果是内置图片，进行处理
+        if not photo_url.startswith("http"):
+            photo_url = urljoin(post_link, photo_url)
         
         # 只处理有效的图片链接
         if not is_valid_image(photo_url):
@@ -88,6 +93,7 @@ def download_image(photo_url):
         print(f"下载图片时发生错误： {e}")
         return None
 
+
 # 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
     media = []
@@ -95,7 +101,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
 
     # 发送图片组
     for i, photo_url in enumerate(photo_urls):
-        file_path = download_image(photo_url)
+        file_path = download_image(photo_url, msg)
         if file_path:
             with open(file_path, "rb") as f:
                 if text_with_single_image and i == 0:  # 如果是单图且满足条件，将文字作为caption
@@ -105,6 +111,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
                     media.append(telegram.InputMediaPhoto(media=f))
             os.remove(file_path)
         else:
+            # 处理图床图片
             if text_with_single_image and i == 0:
                 caption = f"<b>{msg.split('\n')[0]}</b>{msg[len(msg.split('\n')[0]):]}"
                 media.append(telegram.InputMediaPhoto(media=photo_url, caption=caption, parse_mode='HTML'))
@@ -134,6 +141,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
         # 发送剩余部分（如果有）
         if msg:
             await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
+
 
 # 解析帖子内容
 def parse_post_content(post_link):
