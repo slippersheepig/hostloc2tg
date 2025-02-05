@@ -136,7 +136,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
             await bot.send_message(chat_id=CHANNEL_ID, text=part, parse_mode='Markdown')
             msg = msg[max_length:]  # 剩余部分继续处理
 
-        # 发送剩余部分（如果有）    
+        # 发送剩余部分（如果有）
         if msg:
             await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
