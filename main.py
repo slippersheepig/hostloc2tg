@@ -93,8 +93,6 @@ def download_image(photo_url, post_link):
         print(f"下载图片时发生错误： {e}")
         return None
 
-
-# 发送消息到 Telegram Channel
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
     media = []
     text_with_single_image = len(photo_urls) == 1 and not attachment_urls and len(msg) <= 1024
@@ -138,7 +136,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
             await bot.send_message(chat_id=CHANNEL_ID, text=part, parse_mode='Markdown')
             msg = msg[max_length:]  # 剩余部分继续处理
 
-        # 发送剩余部分（如果有）
+        # 发送剩余部分（如果有）    
         if msg:
             await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
@@ -172,6 +170,10 @@ def parse_post_content(post_link):
         for tag in attachment_tags:
             attachment_url = urljoin(post_link, tag["href"])
             attachment_urls.append(attachment_url)
+
+        # 如果帖子没有图片链接，但有附件，则将附件作为图片链接处理
+        if not photo_urls and attachment_urls:
+            photo_urls = attachment_urls
 
         return post_title, content, photo_urls, attachment_urls
 
