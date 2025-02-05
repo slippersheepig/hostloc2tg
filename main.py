@@ -51,18 +51,6 @@ headers = {
     'Upgrade-Insecure-Requests': '1'
 }
 
-# 检查图片链接是否有效且尺寸大于1x1像素
-def is_valid_image(url):
-    try:
-        response = requests_cffi.get(url, stream=True, headers=headers, impersonate="chrome124")
-        if response.status_code == 200 and "image" in response.headers["Content-Type"]:
-            response.raw.decode_content = True
-            return int(response.headers.get('Content-Length', 0)) > 100  # 简单检查内容长度是否大于100字节
-        return False
-    except Exception as e:
-        print(f"检查图片链接时发生错误: {e}")
-        return False
-
 # 下载图片并返回文件路径
 def download_image(photo_url, post_link):
     try:
@@ -76,11 +64,6 @@ def download_image(photo_url, post_link):
         # 如果是内置图片，进行处理
         if not photo_url.startswith("http"):
             photo_url = urljoin(post_link, photo_url)
-        
-        # 只处理有效的图片链接
-        if not is_valid_image(photo_url):
-            print(f"无效的图片链接: {photo_url}")
-            return None
 
         response = requests_cffi.get(photo_url, headers=headers, impersonate="chrome124")
         if response.status_code == 200:
@@ -95,26 +78,17 @@ def download_image(photo_url, post_link):
 
 async def send_message(msg, photo_urls=[], attachment_urls=[]):
     media = []
-    text_with_single_image = len(photo_urls) == 1 and not attachment_urls and len(msg) <= 1024
 
     # 发送图片组
     for i, photo_url in enumerate(photo_urls):
         file_path = download_image(photo_url, msg)
         if file_path:
             with open(file_path, "rb") as f:
-                if text_with_single_image and i == 0:  # 如果是单图且满足条件，将文字作为caption
-                    caption = f"<b>{msg.split('\n')[0]}</b>{msg[len(msg.split('\n')[0]):]}"
-                    media.append(telegram.InputMediaPhoto(media=f, caption=caption, parse_mode='HTML'))
-                else:
-                    media.append(telegram.InputMediaPhoto(media=f))
+                media.append(telegram.InputMediaPhoto(media=f))
             os.remove(file_path)
         else:
             # 处理图床图片
-            if text_with_single_image and i == 0:
-                caption = f"<b>{msg.split('\n')[0]}</b>{msg[len(msg.split('\n')[0]):]}"
-                media.append(telegram.InputMediaPhoto(media=photo_url, caption=caption, parse_mode='HTML'))
-            else:
-                media.append(telegram.InputMediaPhoto(media=photo_url))
+            media.append(telegram.InputMediaPhoto(media=photo_url))
 
     # 如果有多张图片，发送媒体组
     if media:
@@ -136,7 +110,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
             await bot.send_message(chat_id=CHANNEL_ID, text=part, parse_mode='Markdown')
             msg = msg[max_length:]  # 剩余部分继续处理
 
-        # 发送剩余部分（如果有）
+        # 发送剩余部分（如果有）  
         if msg:
             await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
