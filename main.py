@@ -142,8 +142,6 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
         if msg:
             await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
 
-
-# 解析帖子内容
 def parse_post_content(post_link):
     try:
         response = requests_cffi.get(post_link, headers=headers, impersonate="chrome124")
@@ -152,15 +150,15 @@ def parse_post_content(post_link):
 
         soup = BeautifulSoup(html_content, 'html.parser')
 
-        # 获取帖子标题
+        # 从 <h1 class="ts"> 中的 <span id="thread_subject"> 获取帖子标题
         post_title_tag = soup.find("h1", {"class": "ts"})
-        post_title = post_title_tag.get_text().strip() if post_title_tag else "无标题"
+        post_title = post_title_tag.find("span", {"id": "thread_subject"}).get_text().strip() if post_title_tag else "无标题"
 
-        # 获取帖子正文内容
+        # 从 <td class="t_f"> 中提取帖子内容
         post_content_tag = soup.find("td", {"class": "t_f", "id": lambda x: x and x.startswith("postmessage_")})
         content = post_content_tag.get_text("\n", strip=True) if post_content_tag else "无内容"
         
-        # 获取图片链接
+        # 获取帖子中的图片链接
         photo_urls = []
         photo_tags = post_content_tag.find_all("img") if post_content_tag else []
         for tag in photo_tags:
@@ -204,6 +202,7 @@ async def check_hostloc():
             post_link = "https://www.hostloc.com/" + link['href']
             post_title = link.string
 
+            # 获取帖子时间并转换为时间戳
             post_time_str = link.parent.find_next('em').text
             post_time = parse_relative_time(post_time_str)
 
