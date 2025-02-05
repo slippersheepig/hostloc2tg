@@ -150,11 +150,9 @@ def parse_post_content(post_link):
 
         soup = BeautifulSoup(html_content, 'html.parser')
 
-        # 从 <h1 class="ts"> 中的 <span id="thread_subject"> 获取帖子标题
         post_title_tag = soup.find("h1", {"class": "ts"})
         post_title = post_title_tag.find("span", {"id": "thread_subject"}).get_text().strip() if post_title_tag else "无标题"
 
-        # 从 <td class="t_f"> 中提取帖子内容
         post_content_tag = soup.find("td", {"class": "t_f", "id": lambda x: x and x.startswith("postmessage_")})
         content = post_content_tag.get_text("\n", strip=True) if post_content_tag else "无内容"
         
