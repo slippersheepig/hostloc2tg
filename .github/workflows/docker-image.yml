@@ -5,6 +5,7 @@ on:
     workflows: ["Auto Merge Dependabot PRs"]
     types:
       - completed
+      
 jobs:
   docker:
     runs-on: ubuntu-latest
