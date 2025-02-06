@@ -97,7 +97,17 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     # 检查消息长度并分割
     max_message_length = 4096
     if len(message) > max_message_length:
-        # 分割消息内容
+        # 使用正则表达式匹配所有URL
+        urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', message)
+        # 计算每个URL的长度
+        url_lengths = [len(url) for url in urls]
+        # 计算每个URL的结束位置
+        url_end_positions = [message.find(url) + len(url) for url in urls]
+        # 计算每个URL的结束位置与最大消息长度的差值
+        url_end_diffs = [max_message_length - end_pos for end_pos in url_end_positions]
+        # 找到第一个差值为负数的URL的索引
+        split_index = next((i for i, diff in enumerate(url_end_diffs) if diff < 0), len(urls))
+        # 分割消息
         parts = [message[i:i+max_message_length] for i in range(0, len(message), max_message_length)]
         for part in parts:
             await bot.send_message(chat_id=CHANNEL_ID, text=part, parse_mode='Markdown')
