@@ -94,8 +94,15 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     if attachment_urls:
         message += "附件链接：\n" + "\n".join(attachment_urls)
 
-    # 发送整合后的文本和附件
-    await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
+    # 检查消息长度并分割
+    max_message_length = 4096
+    if len(message) > max_message_length:
+        # 分割消息内容
+        parts = [message[i:i+max_message_length] for i in range(0, len(message), max_message_length)]
+        for part in parts:
+            await bot.send_message(chat_id=CHANNEL_ID, text=part, parse_mode='Markdown')
+    else:
+        await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
 
 # 解析帖子内容
 def parse_post_content(post_link):
