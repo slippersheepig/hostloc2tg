@@ -92,7 +92,7 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     # 发送文本消息和附件
     message = f"{msg}\n"  # 发送的正文消息内容
     if attachment_urls:
-        message += "\n附件链接:\n" + "\n".join(attachment_urls)
+        message += "附件链接：\n" + "\n".join(attachment_urls)
 
     # 发送整合后的文本和附件
     await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
