@@ -1,4 +1,4 @@
-from curl_cffi import requests as requests_cffi
+from curl_cffi import requests as requests_cffi 
 import time
 import random
 import asyncio
@@ -94,24 +94,27 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     if attachment_urls:
         message += "附件链接：\n" + "\n".join(attachment_urls)
 
-    # 检查消息长度并分割
-    max_message_length = 4096
-    if len(message) > max_message_length:
-        # 使用正则表达式匹配所有URL
-        urls = re.findall(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', message)
-        # 计算每个URL的长度
-        url_lengths = [len(url) for url in urls]
-        # 计算每个URL的结束位置
-        url_end_positions = [message.find(url) + len(url) for url in urls]
-        # 计算每个URL的结束位置与最大消息长度的差值
-        url_end_diffs = [max_message_length - end_pos for end_pos in url_end_positions]
-        # 找到第一个差值为负数的URL的索引
-        split_index = next((i for i, diff in enumerate(url_end_diffs) if diff < 0), len(urls))
-        # 分割消息
-        parts = [message[i:i+max_message_length] for i in range(0, len(message), max_message_length)]
-        for part in parts:
-            await bot.send_message(chat_id=CHANNEL_ID, text=part, parse_mode='Markdown')
-    else:
+    # 将消息拆分成多个部分
+    MAX_MESSAGE_LENGTH = 4096  # Telegram 最大消息长度
+    if len(message) > MAX_MESSAGE_LENGTH:
+        # 将消息分成多个部分
+        while len(message) > MAX_MESSAGE_LENGTH:
+            # 查找最后一个完整的 URL
+            last_url_end = message.rfind('http', 0, MAX_MESSAGE_LENGTH)
+            if last_url_end == -1:
+                # 如果没有找到完整的 URL，则直接拆分
+                await bot.send_message(chat_id=CHANNEL_ID, text=message[:MAX_MESSAGE_LENGTH], parse_mode='Markdown')
+                message = message[MAX_MESSAGE_LENGTH:]
+            else:
+                # 如果找到了完整的 URL，则确保不截断 URL
+                next_url_start = message.find(' ', last_url_end)
+                if next_url_start == -1:
+                    next_url_start = len(message)
+                await bot.send_message(chat_id=CHANNEL_ID, text=message[:next_url_start], parse_mode='Markdown')
+                message = message[next_url_start:]
+    
+    # 发送剩余的消息部分
+    if message:
         await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
 
 # 解析帖子内容
