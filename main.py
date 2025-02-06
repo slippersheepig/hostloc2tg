@@ -85,15 +85,17 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
         else:
             media.append(telegram.InputMediaPhoto(media=photo_url))  # 使用原始URL作为备份
     
+    # 先发送图片
     if media:
-        # 发送图片
         await bot.send_media_group(chat_id=CHANNEL_ID, media=media)
     
     # 发送文本消息和附件
+    message = f"{msg}\n"  # 发送的正文消息内容
     if attachment_urls:
-        msg += "\n附件链接:\n" + "\n".join(attachment_urls)
-    await bot.send_message(chat_id=CHANNEL_ID, text=msg, parse_mode='Markdown')
+        message += "\n附件链接:\n" + "\n".join(attachment_urls)
 
+    # 发送整合后的文本和附件
+    await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
 
 # 解析帖子内容
 def parse_post_content(post_link):
