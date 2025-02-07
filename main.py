@@ -94,28 +94,8 @@ async def send_message(msg, photo_urls=[], attachment_urls=[]):
     if attachment_urls:
         message += "附件链接：\n" + "\n".join(attachment_urls)
 
-    # 将消息拆分成多个部分
-    MAX_MESSAGE_LENGTH = 4096  # Telegram 最大消息长度
-    if len(message) > MAX_MESSAGE_LENGTH:
-        # 将消息分成多个部分
-        while len(message) > MAX_MESSAGE_LENGTH:
-            # 查找最后一个完整的 URL
-            last_url_end = message.rfind('http', 0, MAX_MESSAGE_LENGTH)
-            if last_url_end == -1:
-                # 如果没有找到完整的 URL，则直接拆分
-                await bot.send_message(chat_id=CHANNEL_ID, text=message[:MAX_MESSAGE_LENGTH], parse_mode='Markdown')
-                message = message[MAX_MESSAGE_LENGTH:]
-            else:
-                # 如果找到了完整的 URL，则确保不截断 URL
-                next_url_start = message.find(' ', last_url_end)
-                if next_url_start == -1:
-                    next_url_start = len(message)
-                await bot.send_message(chat_id=CHANNEL_ID, text=message[:next_url_start], parse_mode='Markdown')
-                message = message[next_url_start:]
-    
-    # 发送剩余的消息部分
-    if message:
-        await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
+    # 发送整合后的文本和附件
+    await bot.send_message(chat_id=CHANNEL_ID, text=message, parse_mode='Markdown')
 
 # 解析帖子内容
 def parse_post_content(post_link):
