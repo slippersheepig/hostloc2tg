@@ -7,6 +7,7 @@ from dotenv import dotenv_values
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 import os
+import uuid
 
 # 从.env文件中读取配置
 config = dotenv_values("/opt/h2tg/.env")
@@ -63,7 +64,7 @@ def download_image(photo_url):
         
         response = requests_cffi.get(photo_url, headers=headers, impersonate="chrome124")
         if response.status_code == 200:
-            file_path = "temp_image.jpg"
+            file_path = f"temp_{uuid.uuid4().hex}.jpg"
             with open(file_path, "wb") as f:
                 f.write(response.content)
             return file_path
@@ -181,10 +182,12 @@ async def check_hostloc():
 
 # 使用 asyncio.create_task() 来运行 check_hostloc() 作为异步任务
 async def run_scheduler():
-    # 每隔1-2分钟执行一次检查
     while True:
+        try:
+            await check_hostloc()
+        except Exception as e:
+            print("调度错误:", e)
         await asyncio.sleep(random.uniform(60, 120))
-        asyncio.create_task(check_hostloc())
 
 # 启动定时任务
 if __name__ == "__main__":
