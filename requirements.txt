@@ -1,4 +1,4 @@
 curl_cffi==0.14.0
 beautifulsoup4==4.14.3
 python-dotenv==1.2.1
-python-telegram-bot==22.5
+python-telegram-bot==22.6
